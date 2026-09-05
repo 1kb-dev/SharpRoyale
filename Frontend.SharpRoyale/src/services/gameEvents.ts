@@ -1,4 +1,5 @@
 import { gameState } from "../game/gameState";
+import { getPlayerInfo } from "./WSconnection";
 export interface MatchAction {
   option: number;
   id: number;
@@ -48,7 +49,18 @@ function isMoveValues(val: unknown): val is MoveValues {
   return typeof posObj.x === "number" && typeof posObj.y === "number";
 }
 
-export function applyMatchEvent(event: MatchEvent) {
+export async function applyMatchEvent(event: MatchEvent) {
+  if (gameState.playerId === null) {
+    const playerInfo = await getPlayerInfo();
+    if (playerInfo) {
+      gameState.playerId = playerInfo.playerId;
+      gameState.isMirrored = playerInfo.isMirrored;
+    } else {
+      console.error("Failed to retrieve player info.");
+      return;
+    }
+  }
+
   for (const action of event.actions) {
     switch (action.option) {
       case 0: // spawn
@@ -75,11 +87,15 @@ function applySpawnAction(action: MatchAction) {
     console.error("Invalid spawn values:", action.values);
     return;
   }
-  // TODO: Implement spawn action logic
+
+  const isEnemy = action.ownerId !== gameState.playerId;
+  // a log saying the players id and the owner id and whether it is an enemy or not
+
   gameState.entities.set(action.id, {
     id: action.id,
     entityId: action.entityId,
     ownerId: action.ownerId,
+    isEnemy: isEnemy,
     lastAction: action,
     position: action.values.position,
   });

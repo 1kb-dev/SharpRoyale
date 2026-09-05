@@ -44,3 +44,24 @@ export function sendSpawnAction(action: string, values: SpawnActionValues) {
     .invoke("SendPlayerAction", action, values)
     .catch((err) => console.error("Error sending spawn action:", err));
 }
+
+interface PlayerInfo {
+  playerId: number;
+  matchId: number;
+  isMirrored: boolean;
+}
+export async function getPlayerInfo(): Promise<PlayerInfo | null> {
+  if (!connection) {
+    console.error("SignalR connection is not established.");
+    return null;
+  }
+
+  try {
+    const playerInfo = await connection.invoke<PlayerInfo>("GetPlayerInfo");
+    console.info("RETURNED PLAYER INFO:", playerInfo);
+    return playerInfo;
+  } catch (err) {
+    console.error("Error getting player ID:", err);
+    return null;
+  }
+}

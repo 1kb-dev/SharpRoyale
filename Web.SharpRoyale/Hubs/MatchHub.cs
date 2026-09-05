@@ -3,6 +3,7 @@ using Core.SharpRoyale.GameServices.UserInteractionService;
 using Engine.SharpRoyale;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Web.SharpRoyale.Infrastructure;
 
 namespace Web.SharpRoyale.Hubs;
 
@@ -13,7 +14,8 @@ public class MatchHub(MatchService matchService) : Hub
     {
         var matchId = GetMatchIdFromRoute(Context.GetHttpContext());
         if (!matchService.CheckMatchExists(matchId))
-            throw new HubException("match_not_found");
+            return;
+            //throw new HubException("match_not_found");
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"match:{matchId}");
 
@@ -92,5 +94,31 @@ public class MatchHub(MatchService matchService) : Hub
             return option;
 
         return null;
+    }
+
+    public record struct PlayerInfo(int PlayerId, int MatchId, bool IsMirrored);
+    public PlayerInfo GetPlayerInfo()
+    {
+        int playerId = GetPlayerId(Context.User);
+        bool playerIsMirrored = false;
+        int matchId = 0;
+        foreach (Match match in matchService._matches.Values)
+        {
+            if (match.Players.p1.Id == playerId)
+            {
+                playerIsMirrored = match.Players.p1.IsMirrored;
+                matchId = match.MatchId;
+                break;
+            }
+
+            if (match.Players.p2.Id == playerId)
+            {
+                playerIsMirrored = match.Players.p2.IsMirrored;
+                matchId = match.MatchId;
+                break;
+            }
+
+        }
+        return new PlayerInfo(playerId, matchId, playerIsMirrored);
     }
 }

@@ -7,6 +7,7 @@ public record TickActionDto(
     int EntityId,
     int Id,
     int OwnerId,
+    bool isMirrored,
     object? Values,
     DateTime Time
 );
@@ -29,6 +30,7 @@ public class TickClientFeedback(ITickResultPublisher tickResultPublisher)
                 actionElement.Entity.EntityId,
                 actionElement.Entity.Id,
                 actionElement.Entity.Owner,
+                actionElement.Entity.IsMirrored,
                 actionElement.Values,
                 actionElement.Time
             ))

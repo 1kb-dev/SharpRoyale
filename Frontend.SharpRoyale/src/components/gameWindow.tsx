@@ -10,6 +10,7 @@ import {
 import { applyMatchEvent } from "../services/gameEvents";
 import DeckContainer from "./deckContainer";
 import { getCardEntityId } from "../services/deckService";
+import { gameState } from "../game/gameState";
 
 interface GameWindowProps {
   matchId: number | null;
@@ -87,9 +88,15 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
         console.error("Invalid card ID:", activeCard.current);
         return;
       }
+
+      let spawnY = previewTile.current.y;
+      if (gameState.isMirrored) {
+        spawnY = TILE_ROWS - spawnY;
+      }
+
       sendSpawnAction("Spawn", {
         entityId: entityId,
-        Position: { x: previewTile.current.x, y: previewTile.current.y },
+        Position: { x: previewTile.current.x, y: spawnY },
       });
       console.info(
         "Spawn action sent for entityId:",

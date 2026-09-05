@@ -57,7 +57,7 @@ function renderTiles(
   canvasWidth: number,
   canvasHeight: number,
 ) {
-  ctx.strokeStyle = "#3a3a3a";
+  ctx.strokeStyle = "#46573d";
   ctx.lineWidth = 1;
   for (let col = 0; col <= TILE_COLS; col++) {
     const x = col * tileWidth;
@@ -87,20 +87,66 @@ function renderEntities(
   tileHeight: number,
 ) {
   for (const entity of gameState.entities.values()) {
-    const size = ENTITY_DATA[entity.entityId].size;
-    const [sizeW, sizeH] = size;
-
-    const centerX = entity.position.x * tileWidth;
-    const centerY = entity.position.y * tileHeight;
-
-    const x = centerX - (sizeW * tileWidth) / 2;
-    const y = centerY - (sizeH * tileHeight) / 2;
-
-    ctx.fillStyle = "#c88a2b";
-    ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
+    if (entity.isEnemy) {
+      renderEnemyEntity(ctx, entity, tileWidth, tileHeight);
+    } else {
+      renderFriendlyEntity(ctx, entity, tileWidth, tileHeight);
+    }
   }
 }
 
+function renderEnemyEntity(
+  ctx: CanvasRenderingContext2D,
+  entity: any,
+  tileWidth: number,
+  tileHeight: number,
+) {
+  const size = ENTITY_DATA[entity.entityId].size;
+  const [sizeW, sizeH] = size;
+
+  let centerX = entity.position.x * tileWidth;
+  let centerY = entity.position.y * tileHeight;
+
+  if (gameState.isMirrored) {
+    centerY = (TILE_ROWS - entity.position.y) * tileHeight;
+  }
+
+  const x = centerX - (sizeW * tileWidth) / 2;
+  const y = centerY - (sizeH * tileHeight) / 2;
+
+  ctx.fillStyle = darken(ENTITY_DATA[entity.entityId].color);
+  ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
+}
+
+function renderFriendlyEntity(
+  ctx: CanvasRenderingContext2D,
+  entity: any,
+  tileWidth: number,
+  tileHeight: number,
+) {
+  const size = ENTITY_DATA[entity.entityId].size;
+  const [sizeW, sizeH] = size;
+
+  let centerX = entity.position.x * tileWidth;
+  let centerY = entity.position.y * tileHeight;
+
+  if (gameState.isMirrored) {
+    centerY = (TILE_ROWS - entity.position.y) * tileHeight;
+  }
+
+  const x = centerX - (sizeW * tileWidth) / 2;
+  const y = centerY - (sizeH * tileHeight) / 2;
+
+  ctx.fillStyle = ENTITY_DATA[entity.entityId].color;
+  ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
+}
+function darken(hex: string, amount = 0.3): string {
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.max(0, ((num >> 16) & 0xff) * (1 - amount));
+  const g = Math.max(0, ((num >> 8) & 0xff) * (1 - amount));
+  const b = Math.max(0, (num & 0xff) * (1 - amount));
+  return `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
+}
 function renderSeaAndBridge(
   ctx: CanvasRenderingContext2D,
   tileWidth: number,
