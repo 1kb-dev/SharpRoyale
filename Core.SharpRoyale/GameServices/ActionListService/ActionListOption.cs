@@ -19,4 +19,4 @@ public readonly record struct Position(double X, double Y);
 public record ActionListValueSpawn(Position Position, int EntityId, Player player)
     : ActionListValue;
 
-public record ActionListValueMove(Position Position, Entity Entity) : ActionListValue;
+public record ActionListValueMove(Position Position, int EntityId) : ActionListValue;

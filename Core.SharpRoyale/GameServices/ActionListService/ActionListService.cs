@@ -191,11 +191,17 @@ public static class ActionListService
             return;
         }
 
-        NavigationService.NavigationService.MoveEntity(move.Entity, move.Position);
+        Entity? entity = match.Map.Entities.FirstOrDefault(e => e.Id == move.EntityId);
+        if (entity == null)
+        {
+            return;
+        }
+
+        NavigationService.NavigationService.MoveEntity(entity, move.Position);
 
         match.ActionListResult.Add(
             new ActionElementResult(
-                move.Entity,
+                entity,
                 actionElement.Option,
                 actionElement.Values,
                 actionElement.Time

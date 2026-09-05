@@ -34,6 +34,6 @@ public class Larry(int owner, Match match) : Entity(owner, match.GetNextEntityId
     public override void Tick()
     {
         Position nextPos = NavigationService.GetNextNavigation(this, match, TickRate);
-        ActionListService.AppendActionListMove(new ActionListValueMove(nextPos, this), match);
+        ActionListService.AppendActionListMove(new ActionListValueMove(nextPos, this.Id), match);
     }
 }
