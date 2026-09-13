@@ -1,11 +1,14 @@
-﻿using Core.SharpRoyale;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Core.SharpRoyale;
 
 namespace Core.SharpRoyale.GameServices.ActionListService;
 
 public record ActionElement(ActionListOption Option, ActionListValue Values, DateTime Time);
 
 public record ActionElementResult(
-    Entity Entity,
+    Entity? Entity,
     ActionListOption Option,
     ActionListValue Values,
     DateTime Time
@@ -41,6 +44,18 @@ public static class ActionListService
         );
         SortActionList(match);
     }
+    
+    public static void AppendActionListDespawn(ActionListValueDespawn values, Match match)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(match);
+
+        match.ActionList.Add(
+            new ActionElement(ActionListOption.Despawn, values, DateTime.UtcNow)
+        );
+        SortActionList(match);
+    }
+    
 
     public static void AppendActionListMove(ActionListValueMove values, Match match)
     {
@@ -48,6 +63,15 @@ public static class ActionListService
         ArgumentNullException.ThrowIfNull(match);
 
         match.ActionList.Add(new ActionElement(ActionListOption.Move, values, DateTime.UtcNow));
+        SortActionList(match);
+    }
+    
+    public static void AppendActionListAttack(ActionListValueAttack values, Match match)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(match);
+
+        match.ActionList.Add(new ActionElement(ActionListOption.Attack, values, DateTime.UtcNow));
         SortActionList(match);
     }
 
@@ -87,10 +111,10 @@ public static class ActionListService
                     ApplyMoveAction(actionElement, match);
                     break;
                 case ActionListOption.Attack:
-                    ApplyAttackAction(actionElement);
+                    ApplyAttackAction(actionElement, match);
                     break;
-                case ActionListOption.Die:
-                    ApplyDieAction(actionElement);
+                case ActionListOption.Despawn:
+                    ApplyDespawnAction(actionElement, match);
                     break;
                 case ActionListOption.Exit:
                     ApplyExitAction(actionElement);
@@ -125,7 +149,7 @@ public static class ActionListService
             ActionListOption.SpawnSpecial => 0,
             ActionListOption.Attack => 1,
             ActionListOption.Move => 2,
-            ActionListOption.Die => 3,
+            ActionListOption.Despawn => 3,
             ActionListOption.Exit => 4,
             _ => 2,
         };
@@ -209,14 +233,57 @@ public static class ActionListService
         );
     }
 
-    private static void ApplyAttackAction(ActionElement actionElement)
+    private static void ApplyAttackAction(ActionElement actionElement, Match match)
     {
-        // TODO: apply attack logic.
+        if (actionElement.Values is not ActionListValueAttack val)
+        {
+            return;
+        }
+
+
+        Entity? attacker = match.Map.Entities.FirstOrDefault(e => e.Id == val.AttackerId);
+        Entity? victim = match.Map.Entities.FirstOrDefault(e => e.Id == val.VictimId);
+
+        if (attacker is null || victim is null)
+        {
+            return;
+        }
+        
+        
+        AttackService.AttackService.ApplyMeleeDamage(attacker, victim);
+        
+        match.ActionListResult.Add(
+            new ActionElementResult(
+                victim,
+                actionElement.Option,
+                actionElement.Values,
+                actionElement.Time
+            )
+        );
     }
 
-    private static void ApplyDieAction(ActionElement actionElement)
+    private static void ApplyDespawnAction(ActionElement actionElement, Match match)
     {
-        // TODO: apply die logic.
+        if (actionElement.Values is not ActionListValueDespawn val)
+        {
+            return;
+        }
+        
+        Entity? entity = match.Map.Entities.FirstOrDefault(e => e.Id == val.Id);
+
+        if (entity != null)
+        {
+            SpawnService.SpawnService.DespawnSingularEntity(val.Id, match);
+            
+            match.ActionListResult.Add(
+                new ActionElementResult(
+                    entity,
+                    actionElement.Option,
+                    actionElement.Values,
+                    actionElement.Time
+                )
+            );
+        }
     }
 
     private static void ApplyExitAction(ActionElement actionElement)

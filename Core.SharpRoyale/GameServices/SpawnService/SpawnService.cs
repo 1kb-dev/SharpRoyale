@@ -44,4 +44,13 @@ public static class SpawnService
         match.Map.Entities.Add(entity);
         return entity;
     }
+
+    public static void DespawnSingularEntity(int Id, Match match)
+    {
+        Entity? entity = match.Map.Entities.FirstOrDefault(x => x.Id == Id);
+        if (entity != null)
+        {
+            match.Map.Entities.Remove(entity);
+        }
+    }
 }

@@ -1,4 +1,6 @@
-﻿using Core.SharpRoyale.GameServices.ActionListService;
+﻿using System;
+using System.Collections.Generic;
+using Core.SharpRoyale.GameServices.ActionListService;
 
 namespace Core.SharpRoyale.GameServices.NavigationService;
 
@@ -13,8 +15,32 @@ public static class NavigationService
     // 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
     public static Position GetNextNavigation(Entity entity, Match match, double deltaTime)
     {
-        Position navTarget = GetNavigationTarget(entity, match);
+        (Position navTarget, Entity? navTargetEntity) = GetNavigationTarget(entity, match);
+        Position newPosition = GetStep(navTarget, entity, deltaTime);
+        if (navTargetEntity != null)
+            AssignAggroIfInRange(entity, navTargetEntity);
 
+        return newPosition;
+    }
+
+    private static void AssignAggroIfInRange(Entity entity, Entity navTargetEntity)
+    {
+        double distance = 0;
+        if (navTargetEntity.IsConstruction)
+        {
+            distance = GetDistanceToConstruction(entity, navTargetEntity);
+        }
+        else
+        {
+            distance = GetDistanceToHitbox(entity, navTargetEntity);
+        }
+        if (distance <= entity.AggroRange)
+            entity.Aggro = navTargetEntity;
+    }
+
+    private static Position GetStep(Position navTarget, Entity entity, double deltaTime)
+    {
+        
         double dx = navTarget.X - entity.Pos.X;
         double dy = navTarget.Y - entity.Pos.Y;
 
@@ -63,7 +89,7 @@ public static class NavigationService
         return navTarget;
     }
 
-    private static Position GetNavigationTarget(Entity entity, Match match)
+    private static (Position, Entity?) GetNavigationTarget(Entity entity, Match match)
     {
         bool logs = false;
         double closestDistanceSquared = double.MaxValue;
@@ -113,12 +139,12 @@ public static class NavigationService
                     Console.WriteLine(
                         "Before bridge enter, enemy after exit bridge, going towards enemy"
                     );
-                return GetCollisionPoint(entity, closestEntity);
+                return (GetCollisionPoint(entity, closestEntity), closestEntity);
             }
 
             if (logs)
                 Console.WriteLine("Before bridge enter, going to bridge enter");
-            return GetEnterBridgeTarget(entity, closestBridge);
+            return (GetEnterBridgeTarget(entity, closestBridge), null);
         }
 
         if (IsPastEnterBridgeTarget(entity) && !IsPastExitBridgeTarget(entity))
@@ -131,7 +157,7 @@ public static class NavigationService
                         Console.WriteLine(
                             "Is past enter bridge but enemy too, going towards enemy"
                         );
-                    return GetCollisionPoint(entity, closestEntity);
+                    return (GetCollisionPoint(entity, closestEntity), closestEntity);
                 }
 
                 if (!IsPastEnterBridgeTarget(closestEntity))
@@ -140,13 +166,13 @@ public static class NavigationService
                         Console.WriteLine(
                             "Is past enter bridge, enemy not, going towards exit bridge"
                         );
-                    return GetExitBridgeTarget(entity, closestBridge);
+                    return (GetExitBridgeTarget(entity, closestBridge), null);
                 }
             }
 
             if (logs)
                 Console.WriteLine("Is pas enter bridge, oging towards exit bridge");
-            return GetExitBridgeTarget(entity, closestBridge);
+            return (GetExitBridgeTarget(entity, closestBridge), null);
         }
 
         if (IsPastExitBridgeTarget(entity))
@@ -157,11 +183,12 @@ public static class NavigationService
                     Console.WriteLine(
                         "Is Past Exit Bridge, enemy is not past enter bridge, going towards enemy"
                     );
-                return GetCollisionPoint(entity, closestEntity);
+                return (GetCollisionPoint(entity, closestEntity), closestEntity);
             }
             if (logs)
                 Console.WriteLine("Is past exit bridge, going towards enemy tower");
-            return GetCollisionPoint(entity, GetClosestEnemyTower(entity, match));
+            Entity closestEnemyTower = GetClosestEnemyTower(entity, match);
+            return (GetCollisionPoint(entity, closestEnemyTower), closestEnemyTower) ;
         }
 
         // If all else fails
@@ -267,7 +294,7 @@ public static class NavigationService
         );
     }
 
-    private static double GetDistanceToHitbox(Entity a, Entity b)
+    public static double GetDistanceToHitbox(Entity a, Entity b)
     {
         double dx = a.Pos.X - b.Pos.X;
         double dy = a.Pos.Y - b.Pos.Y;
@@ -277,7 +304,7 @@ public static class NavigationService
         return Math.Max(centerDistance - a.HitboxRadius - b.HitboxRadius, 0);
     }
 
-    private static double GetDistanceToConstruction(Entity a, Entity b)
+    public static double GetDistanceToConstruction(Entity a, Entity b)
     {
         double dx = Math.Abs(a.Pos.X - b.Pos.X) - b.Width / 2.0;
         double dy = Math.Abs(a.Pos.Y - b.Pos.Y) - b.Height / 2.0;
@@ -288,7 +315,7 @@ public static class NavigationService
         return Math.Sqrt(dx * dx + dy * dy);
     }
 
-    private static double GetDistanceToPosition(Position a, Position b)
+    public static double GetDistanceToPosition(Position a, Position b)
     {
         double dx = a.X - b.X;
         double dy = a.Y - b.Y;

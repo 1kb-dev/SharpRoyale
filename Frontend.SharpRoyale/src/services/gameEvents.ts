@@ -5,7 +5,7 @@ export interface MatchAction {
   id: number;
   entityId: number;
   ownerId: number;
-  values: SpawnValues | AttackValues;
+  values: SpawnValues | MoveValues | DamagedValues | DespawnValues;
   time: string;
 }
 
@@ -23,8 +23,12 @@ interface MoveValues {
   position: { x: number; y: number };
 }
 
-interface AttackValues {
-  dummy: number;
+interface DamagedValues {
+  id: number;
+}
+
+interface DespawnValues {
+  id: number;
 }
 
 function isSpawnValues(val: unknown): val is SpawnValues {
@@ -47,6 +51,20 @@ function isMoveValues(val: unknown): val is MoveValues {
   const posObj = pos as Record<string, unknown>;
 
   return typeof posObj.x === "number" && typeof posObj.y === "number";
+}
+
+function isDamagedValues(val: unknown): val is DamagedValues {
+  if (typeof val !== "object" || val === null) return false;
+  const obj = val as Record<string, unknown>;
+
+  return typeof obj.victimId === "number";
+}
+
+function isDespawnValues(val: unknown): val is DespawnValues {
+  if (typeof val !== "object" || val === null) return false;
+  const obj = val as Record<string, unknown>;
+
+  return typeof obj.id === "number";
 }
 
 export async function applyMatchEvent(event: MatchEvent) {
@@ -77,6 +95,16 @@ export async function applyMatchEvent(event: MatchEvent) {
         console.log("Applying move action:", action);
         applyMoveAction(action);
         break;
+
+      case 3: // damaged
+        console.log("Applying damaged action:", action);
+        applyDamagedAction(action);
+        break;
+
+      case 4:
+        console.log("Applying despawn action:", action);
+        applyDespawnAction(action);
+        break;
     }
   }
   gameState.tickId = event.tickId;
@@ -89,13 +117,13 @@ function applySpawnAction(action: MatchAction) {
   }
 
   const isEnemy = action.ownerId !== gameState.playerId;
-  // a log saying the players id and the owner id and whether it is an enemy or not
 
   gameState.entities.set(action.id, {
     id: action.id,
     entityId: action.entityId,
     ownerId: action.ownerId,
     isEnemy: isEnemy,
+    gotHit: 0,
     lastAction: action,
     position: action.values.position,
   });
@@ -113,4 +141,30 @@ function applyMoveAction(action: MatchAction) {
   }
   entity.position = action.values.position;
   entity.lastAction = action;
+}
+
+function applyDamagedAction(action: MatchAction) {
+  if (!isDamagedValues(action.values)) {
+    console.error("Invalid damaged values:", action.values);
+    return;
+  }
+  const entity = gameState.entities.get(action.id);
+  if (!entity) {
+    console.error("Entity not found for damaged action:", action.id);
+    return;
+  }
+  entity.gotHit = 30;
+}
+
+function applyDespawnAction(action: MatchAction) {
+  if (!isDespawnValues(action.values)) {
+    console.error("Invalid despawn values:", action.values);
+    return;
+  }
+  const entity = gameState.entities.get(action.id);
+  if (!entity) {
+    console.error("Entity not found for despawn action:", action.id);
+    return;
+  }
+  gameState.entities.delete(action.id);
 }

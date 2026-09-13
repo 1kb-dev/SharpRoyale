@@ -6,7 +6,7 @@ public enum ActionListOption
     SpawnSpecial,
     Move,
     Attack,
-    Die,
+    Despawn,
     Exit,
 }
 
@@ -19,4 +19,8 @@ public readonly record struct Position(double X, double Y);
 public record ActionListValueSpawn(Position Position, int EntityId, Player player)
     : ActionListValue;
 
+public record ActionListValueDespawn(int Id)
+    : ActionListValue;
+
 public record ActionListValueMove(Position Position, int EntityId) : ActionListValue;
+public record ActionListValueAttack(int AttackerId, int VictimId) : ActionListValue;

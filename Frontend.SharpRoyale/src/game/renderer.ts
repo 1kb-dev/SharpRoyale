@@ -114,7 +114,13 @@ function renderEnemyEntity(
   const x = centerX - (sizeW * tileWidth) / 2;
   const y = centerY - (sizeH * tileHeight) / 2;
 
-  ctx.fillStyle = darken(ENTITY_DATA[entity.entityId].color);
+  const baseColor = darken(ENTITY_DATA[entity.entityId].color);
+  if (entity.gotHit > 0) {
+    ctx.fillStyle = pulseColor(baseColor, entity.gotHit);
+    entity.gotHit = Math.max(0, entity.gotHit - 1);
+  } else {
+    ctx.fillStyle = baseColor;
+  }
   ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
 }
 
@@ -137,15 +143,115 @@ function renderFriendlyEntity(
   const x = centerX - (sizeW * tileWidth) / 2;
   const y = centerY - (sizeH * tileHeight) / 2;
 
-  ctx.fillStyle = ENTITY_DATA[entity.entityId].color;
+  const baseColor = ENTITY_DATA[entity.entityId].color;
+
+  if (entity.gotHit > 0) {
+    ctx.fillStyle = pulseColor(baseColor, entity.gotHit);
+    entity.gotHit = Math.max(0, entity.gotHit - 1);
+  } else {
+    ctx.fillStyle = baseColor;
+  }
+
   ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
 }
+
 function darken(hex: string, amount = 0.3): string {
   const num = parseInt(hex.replace("#", ""), 16);
   const r = Math.max(0, ((num >> 16) & 0xff) * (1 - amount));
   const g = Math.max(0, ((num >> 8) & 0xff) * (1 - amount));
   const b = Math.max(0, (num & 0xff) * (1 - amount));
   return `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
+}
+
+const HIT_FLASH_DURATION = 30; // ticks
+
+function pulseColor(baseColor: string, gotHit: number): string {
+  const t = gotHit / HIT_FLASH_DURATION; // 1 -> just hit, 0 -> worn off
+  const easedT = 1 - Math.pow(1 - t, 3); // ease-out: fast rise, smooth long tail
+
+  const [h, s, l] = hexOrRgbToHsl(baseColor);
+
+  // push lightness toward ~90%, scaled by how "hit" we still are
+  const targetL = 0.9;
+  const newL = l + (targetL - l) * easedT;
+
+  return hslToRgbString(h, s, newL);
+}
+
+function hexOrRgbToHsl(color: string): [number, number, number] {
+  let r: number, g: number, b: number;
+
+  if (color.startsWith("rgb")) {
+    const match = color.match(/[\d.]+/g)!;
+    [r, g, b] = match.map(Number);
+  } else {
+    const clean = color.replace("#", "");
+    r = parseInt(clean.substring(0, 2), 16);
+    g = parseInt(clean.substring(2, 4), 16);
+    b = parseInt(clean.substring(4, 6), 16);
+  }
+
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+
+  return [h, s, l];
+}
+
+function hslToRgbString(h: number, s: number, l: number): string {
+  if (s === 0) {
+    const v = Math.round(l * 255);
+    return `rgb(${v}, ${v}, ${v})`;
+  }
+
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+
+  const r = Math.round(hue2rgb(p, q, h + 1 / 3) * 255);
+  const g = Math.round(hue2rgb(p, q, h) * 255);
+  const b = Math.round(hue2rgb(p, q, h - 1 / 3) * 255);
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return [r, g, b];
 }
 function renderSeaAndBridge(
   ctx: CanvasRenderingContext2D,

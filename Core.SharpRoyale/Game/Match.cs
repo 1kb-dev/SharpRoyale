@@ -1,4 +1,7 @@
-﻿namespace Core.SharpRoyale;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Core.SharpRoyale;
 
 public class Match
 {
