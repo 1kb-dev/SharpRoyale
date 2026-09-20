@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { gameState } from "./gameState";
-import { ENTITY_DATA } from "./EntityData";
+import { ENTITY_DATA, ShapeType } from "./EntityData";
 
 export const TILE_COLS = 18;
 export const TILE_ROWS = 32;
@@ -121,7 +121,15 @@ function renderEnemyEntity(
   } else {
     ctx.fillStyle = baseColor;
   }
-  ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
+
+  renderObject(
+    ctx,
+    x,
+    y,
+    tileWidth * size[0],
+    tileHeight * size[1],
+    ENTITY_DATA[entity.entityId].shape,
+  );
 }
 
 function renderFriendlyEntity(
@@ -152,7 +160,41 @@ function renderFriendlyEntity(
     ctx.fillStyle = baseColor;
   }
 
-  ctx.fillRect(x, y, tileWidth * size[0], tileHeight * size[1]);
+  renderObject(
+    ctx,
+    x,
+    y,
+    tileWidth * size[0],
+    tileHeight * size[1],
+    ENTITY_DATA[entity.entityId].shape,
+  );
+}
+
+function renderObject(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  shape: ShapeType,
+) {
+  switch (shape) {
+    case ShapeType.Square:
+      ctx.fillRect(x, y, w, h);
+      break;
+    case ShapeType.Circle: {
+      const centerX = x + w / 2;
+      const centerY = y + h / 2;
+      const radius = Math.min(w, h) / 2;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    default:
+      throw new Error(`Unknown shape type: ${shape}`);
+  }
 }
 
 function darken(hex: string, amount = 0.3): string {
