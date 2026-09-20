@@ -10,7 +10,7 @@ public record ActionElement(ActionListOption Option, ActionListValue Values, Dat
 public record ActionElementResult(
     Entity? Entity,
     ActionListOption Option,
-    ActionListValue Values,
+    ActionResultValue Values,
     DateTime Time
 );
 
@@ -174,7 +174,7 @@ public static class ActionListService
                 new ActionElementResult(
                     success,
                     actionElement.Option,
-                    actionElement.Values,
+                    new ActionResultValueSpawn(val.Position, val.player),
                     actionElement.Time
                 )
             );
@@ -201,7 +201,7 @@ public static class ActionListService
                 new ActionElementResult(
                     success,
                     actionElement.Option,
-                    actionElement.Values,
+                    new ActionResultValueSpawn(val.Position, val.player),
                     actionElement.Time
                 )
             );
@@ -210,24 +210,24 @@ public static class ActionListService
 
     private static void ApplyMoveAction(ActionElement actionElement, Match match)
     {
-        if (actionElement.Values is not ActionListValueMove move)
+        if (actionElement.Values is not ActionListValueMove val)
         {
             return;
         }
 
-        Entity? entity = match.Map.Entities.FirstOrDefault(e => e.Id == move.EntityId);
+        Entity? entity = match.Map.Entities.FirstOrDefault(e => e.Id == val.EntityId);
         if (entity == null)
         {
             return;
         }
 
-        NavigationService.NavigationService.MoveEntity(entity, move.Position);
+        NavigationService.NavigationService.MoveEntity(entity, val.Position);
 
         match.ActionListResult.Add(
             new ActionElementResult(
                 entity,
                 actionElement.Option,
-                actionElement.Values,
+                new ActionResultValueMove(val.Position),
                 actionElement.Time
             )
         );
@@ -256,7 +256,7 @@ public static class ActionListService
             new ActionElementResult(
                 victim,
                 actionElement.Option,
-                actionElement.Values,
+                new ActionResultValueAttack(val.AttackerId, val.VictimId),
                 actionElement.Time
             )
         );
@@ -279,7 +279,7 @@ public static class ActionListService
                 new ActionElementResult(
                     entity,
                     actionElement.Option,
-                    actionElement.Values,
+                    new ActionResultValueDespawn(val.Id),
                     actionElement.Time
                 )
             );
