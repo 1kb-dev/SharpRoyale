@@ -66,12 +66,12 @@ public static class ActionListService
         SortActionList(match);
     }
     
-    public static void AppendActionListAttack(ActionListValueAttack values, Match match)
+    public static void AppendActionListAttackMelee(ActionListValueAttack values, Match match)
     {
         ArgumentNullException.ThrowIfNull(values);
         ArgumentNullException.ThrowIfNull(match);
 
-        match.ActionList.Add(new ActionElement(ActionListOption.Attack, values, DateTime.UtcNow));
+        match.ActionList.Add(new ActionElement(ActionListOption.AttackMelee, values, DateTime.UtcNow));
         SortActionList(match);
     }
 
@@ -110,8 +110,8 @@ public static class ActionListService
                 case ActionListOption.Move:
                     ApplyMoveAction(actionElement, match);
                     break;
-                case ActionListOption.Attack:
-                    ApplyAttackAction(actionElement, match);
+                case ActionListOption.AttackMelee:
+                    ApplyAttackMeleeAction(actionElement, match);
                     break;
                 case ActionListOption.Despawn:
                     ApplyDespawnAction(actionElement, match);
@@ -147,7 +147,7 @@ public static class ActionListService
         {
             ActionListOption.Spawn => 0,
             ActionListOption.SpawnSpecial => 0,
-            ActionListOption.Attack => 1,
+            ActionListOption.AttackMelee => 1,
             ActionListOption.Move => 2,
             ActionListOption.Despawn => 3,
             ActionListOption.Exit => 4,
@@ -233,7 +233,7 @@ public static class ActionListService
         );
     }
 
-    private static void ApplyAttackAction(ActionElement actionElement, Match match)
+    private static void ApplyAttackMeleeAction(ActionElement actionElement, Match match)
     {
         if (actionElement.Values is not ActionListValueAttack val)
         {

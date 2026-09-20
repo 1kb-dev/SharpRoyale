@@ -5,7 +5,7 @@ public enum ActionListOption
     Spawn,
     SpawnSpecial,
     Move,
-    Attack,
+    AttackMelee,
     Despawn,
     Exit,
 }
