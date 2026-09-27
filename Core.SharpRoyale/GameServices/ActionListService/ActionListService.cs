@@ -66,12 +66,22 @@ public static class ActionListService
         SortActionList(match);
     }
     
-    public static void AppendActionListAttackMelee(ActionListValueAttack values, Match match)
+    public static void AppendActionListAttackMelee(ActionListValueAttackMelee values, Match match)
     {
         ArgumentNullException.ThrowIfNull(values);
         ArgumentNullException.ThrowIfNull(match);
 
         match.ActionList.Add(new ActionElement(ActionListOption.AttackMelee, values, DateTime.UtcNow));
+        SortActionList(match);
+    }
+    
+    
+    public static void AppendActionListAttackRanged(ActionListValueAttackRanged values, Match match)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(match);
+
+        match.ActionList.Add(new ActionElement(ActionListOption.AttackRanged, values, DateTime.UtcNow));
         SortActionList(match);
     }
 
@@ -112,6 +122,9 @@ public static class ActionListService
                     break;
                 case ActionListOption.AttackMelee:
                     ApplyAttackMeleeAction(actionElement, match);
+                    break;
+                case ActionListOption.AttackRanged:
+                    ApplyAttackRangedAction(actionElement, match);
                     break;
                 case ActionListOption.Despawn:
                     ApplyDespawnAction(actionElement, match);
@@ -235,7 +248,7 @@ public static class ActionListService
 
     private static void ApplyAttackMeleeAction(ActionElement actionElement, Match match)
     {
-        if (actionElement.Values is not ActionListValueAttack val)
+        if (actionElement.Values is not ActionListValueAttackMelee val)
         {
             return;
         }
@@ -256,7 +269,31 @@ public static class ActionListService
             new ActionElementResult(
                 victim,
                 actionElement.Option,
-                new ActionResultValueAttack(val.AttackerId, val.VictimId),
+                new ActionResultValueAttackMelee(val.AttackerId, val.VictimId),
+                actionElement.Time
+            )
+        );
+    }
+    
+    private static void ApplyAttackRangedAction(ActionElement actionElement, Match match)
+    {
+        if (actionElement.Values is not ActionListValueAttackRanged val)
+        {
+            return;
+        }
+
+        if (val.Attacker.AttackBehavior is not RangedAttack rangedAttack)
+        {
+            throw new InvalidOperationException();
+        }
+
+        Projectile projectile = AttackService.AttackService.CreateProjectile(rangedAttack.ProjectileType,val.Attacker, val.Victim, match);
+        
+        match.ActionListResult.Add(
+            new ActionElementResult(
+                val.Attacker,
+                actionElement.Option,
+                new ActionResultValueAttackRanged(val.Attacker.Id, rangedAttack.ProjectileType, projectile.Id, projectile.Attacker.Pos, projectile.Victim.Pos, projectile.Direction, projectile.Speed),
                 actionElement.Time
             )
         );

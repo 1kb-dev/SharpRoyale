@@ -1,4 +1,5 @@
 ﻿using Core.SharpRoyale.GameServices.ActionListService;
+using Core.SharpRoyale.GameServices.AttackService;
 using Core.SharpRoyale.GameServices.NavigationService;
 
 namespace Core.SharpRoyale;
@@ -27,12 +28,13 @@ public abstract class Entity(int Owner, Match match)
     public double TickRate = 1.0 / 60;
 
     // Combat
+    internal abstract IAttackBehavior AttackBehavior { get; init; }
     public abstract float AttackDistance { get; }
     protected abstract double AttackSpeed { get; } // seconds between attacks
     public abstract int Damage { get; }
     protected double AttackAccumulator { get; set; }
-    public Entity? Aggro { get; set; } = null;
-    public int AggroRange { get; } = 6;
+    public Entity? Aggro { get; set; } = null; // When entity starts attacking and fully lcoked
+    public virtual int AggroRange { get; } = 6; // the area where the entity will start following an entity, not locked.
     public bool isDead { get; set; } = false;
 
     public abstract Entity ProcessDeployment(ushort x, ushort y);
@@ -48,7 +50,6 @@ public abstract class Entity(int Owner, Match match)
     }
 
     public abstract void ProcessDebuff();
-    protected abstract IAttackBehavior AttackBehavior { get; init; }
 
     public void Tick()
     {
@@ -70,14 +71,19 @@ public abstract class Entity(int Owner, Match match)
 
             return;
         }
-        
+
         Aggro = null;
         AttackAccumulator = 0;
-        
+
         if (!IsConstruction)
         {
-            Position nextPos = NavigationService.GetNextNavigation(this, match, TickRate);
+            (Position nextPos, Entity? closestEntity) = NavigationService.GetNextNavigation(this, match, TickRate);
+            if (closestEntity is not null) AttackService.AssignAggroIfInRange(this, closestEntity);
             ActionListService.AppendActionListMove(new ActionListValueMove(nextPos, this.Id), match);
+        }
+        else
+        {
+            AttackService.TryAssignAggro(this, match);
         }
     }
 
@@ -90,14 +96,13 @@ public abstract class Entity(int Owner, Match match)
         if (aggro.IsConstruction)
         {
             distance = NavigationService.GetDistanceToConstruction(this, aggro);
-            distance -= 0.5; // Idk why. But I dont want to refactor navigation again...
+            distance -= 0.5;
         }
         else
         {
             distance = NavigationService.GetDistanceToHitbox(this, aggro);
         }
-        
-        Console.WriteLine($"distance: {distance}");
+
         if (distance <= AttackDistance) return true;
         return false;
     }

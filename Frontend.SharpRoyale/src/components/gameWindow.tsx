@@ -11,6 +11,9 @@ import { applyMatchEvent } from "../services/gameEvents";
 import DeckContainer from "./deckContainer";
 import { getCardEntityId } from "../services/deckService";
 import { gameState } from "../game/gameState";
+import { preload } from "react-dom";
+import { preloadAllSprites } from "../game/Projectile";
+import { updateAllProjectiles, updateProjectilePosition } from "../game/Projectile";
 
 interface GameWindowProps {
   matchId: number | null;
@@ -47,12 +50,27 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
     observer.observe(canvas);
 
     let frameId: number;
-    const loop = () => {
-      renderFrame(ctx, activeCard.current, previewTile.current);
+    let cancelled = false;
+
+    const start = async () => {
+      await preloadAllSprites(); // ← once, before rendering begins
+
+      const loop = () => {
+        if (cancelled) return;
+        updateAllProjectiles(gameState.projectiles);
+        renderFrame(ctx, activeCard.current, previewTile.current);
+        frameId = requestAnimationFrame(loop);
+      };
       frameId = requestAnimationFrame(loop);
     };
-    frameId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frameId);
+
+    start();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {

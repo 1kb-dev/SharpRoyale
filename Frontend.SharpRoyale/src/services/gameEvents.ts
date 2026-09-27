@@ -31,6 +31,16 @@ interface DespawnValues {
   id: number;
 }
 
+interface ProjectileSpawnValues {
+  id: number;
+  attackerId: number;
+  projectileType: number;
+  startPosition: { x: number; y: number };
+  endPosition: { x: number; y: number };
+  direction: number;
+  speed: number;
+}
+
 function isSpawnValues(val: unknown): val is SpawnValues {
   if (typeof val !== "object" || val === null) return false;
   const obj = val as Record<string, unknown>;
@@ -67,6 +77,31 @@ function isDespawnValues(val: unknown): val is DespawnValues {
   return typeof obj.id === "number";
 }
 
+function isProjectileSpawnValues(val: unknown): val is ProjectileSpawnValues {
+  if (typeof val !== "object" || val === null) return false;
+  const obj = val as Record<string, unknown>;
+
+  const startPosition = obj.startPosition;
+  if (typeof startPosition !== "object" || startPosition === null) return false;
+  const startObj = startPosition as Record<string, unknown>;
+
+  const endPosition = obj.endPosition;
+  if (typeof endPosition !== "object" || endPosition === null) return false;
+  const endObj = endPosition as Record<string, unknown>;
+
+  return (
+    typeof obj.projectileId === "number" &&
+    typeof obj.attackerId === "number" &&
+    typeof obj.projectileType === "number" &&
+    typeof startObj.x === "number" &&
+    typeof startObj.y === "number" &&
+    typeof endObj.x === "number" &&
+    typeof endObj.y === "number" &&
+    typeof obj.direction === "number" &&
+    typeof obj.speed === "number"
+  );
+}
+
 export async function applyMatchEvent(event: MatchEvent) {
   if (gameState.playerId === null) {
     const playerInfo = await getPlayerInfo();
@@ -96,12 +131,19 @@ export async function applyMatchEvent(event: MatchEvent) {
         applyMoveAction(action);
         break;
 
-      case 3: // damaged
+      case 3: // damaged: Server sends both attacker and Victim Id, but rn only the victim is used to apply the damage effect
         console.log("Applying damaged action:", action);
         applyDamagedAction(action);
         break;
-
-      case 4:
+      case 4: // Projectile Spawn
+        console.log("Applying projectile spawn action:", action);
+        applyProjectileSpawnAction(action);
+        break;
+      case 5: // Projectile Move
+        console.log("Applying projectile move action:", action);
+        //applyMoveAction(action);
+        break;
+      case 6: // Despawn
         console.log("Applying despawn action:", action);
         applyDespawnAction(action);
         break;
@@ -167,4 +209,25 @@ function applyDespawnAction(action: MatchAction) {
     return;
   }
   gameState.entities.delete(action.id);
+}
+
+function applyProjectileSpawnAction(action: MatchAction) {
+  if (!isProjectileSpawnValues(action.values)) {
+    console.error("Invalid projectile spawn values:", action.values);
+    return;
+  }
+
+  const isEnemy = action.ownerId !== gameState.playerId;
+
+  gameState.projectiles.set(action.values.id, {
+    id: action.values.id,
+    projectileType: action.values.projectileType,
+    startPosition: action.values.startPosition,
+    endPosition: action.values.endPosition,
+    position: action.values.startPosition,
+    direction: action.values.direction,
+    speed: action.values.speed,
+    isEnemy: isEnemy,
+    spawnTime: performance.now(),
+  });
 }

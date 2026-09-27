@@ -8,6 +8,8 @@ public class ArenaMap
     private const int _height = 32;
 
     private readonly Tile[,] _tiles;
+    public List<Entity> Entities { get; } = new();
+    public List<Projectile> Projectiles { get; } = new();
 
     public ArenaMap()
     {
@@ -30,7 +32,6 @@ public class ArenaMap
         _tiles[12, 15].Kind = TileKind.Bridge;
     }
 
-    public List<Entity> Entities { get; } = new();
 
     private void Debug((Player p1, Player p2) players, Match match)
     {

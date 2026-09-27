@@ -11,6 +11,7 @@ public record ActionListValueDespawn(int Id)
     : ActionListValue;
 
 public record ActionListValueMove(Position Position, int EntityId) : ActionListValue;
-public record ActionListValueAttack(int AttackerId, int VictimId) : ActionListValue;
+public record ActionListValueAttackMelee(int AttackerId, int VictimId) : ActionListValue;
+public record ActionListValueAttackRanged(Entity Attacker, Entity Victim) : ActionListValue;
 
 public readonly record struct Position(double X, double Y);

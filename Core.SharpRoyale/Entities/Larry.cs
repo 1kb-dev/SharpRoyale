@@ -15,7 +15,7 @@ public class Larry(int owner, Match match) : Entity(owner, match)
     public override bool IsConstruction { get; } = false;
     public override float HitboxRadius { get; } = 0.5f;
     public override float AttackDistance { get; } = 0.1f;
-    protected override IAttackBehavior AttackBehavior { get; init; } = new MeleeAttack();
+    internal override IAttackBehavior AttackBehavior { get; init; } = new MeleeAttack();
     protected override double AttackSpeed { get; } = 2;
     public override int Damage { get; } = 1;
     protected override int Health { get; set; } = 10;

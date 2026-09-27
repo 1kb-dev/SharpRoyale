@@ -13,30 +13,15 @@ public static class NavigationService
     };
 
     // 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
-    public static Position GetNextNavigation(Entity entity, Match match, double deltaTime)
+    public static (Position, Entity?) GetNextNavigation(Entity entity, Match match, double deltaTime)
     {
         (Position navTarget, Entity? navTargetEntity) = GetNavigationTarget(entity, match);
         Position newPosition = GetStep(navTarget, entity, deltaTime);
-        if (navTargetEntity != null)
-            AssignAggroIfInRange(entity, navTargetEntity);
+        if (navTargetEntity != null) return (newPosition, navTargetEntity);
 
-        return newPosition;
+        return (newPosition, null);
     }
 
-    private static void AssignAggroIfInRange(Entity entity, Entity navTargetEntity)
-    {
-        double distance = 0;
-        if (navTargetEntity.IsConstruction)
-        {
-            distance = GetDistanceToConstruction(entity, navTargetEntity);
-        }
-        else
-        {
-            distance = GetDistanceToHitbox(entity, navTargetEntity);
-        }
-        if (distance <= entity.AggroRange)
-            entity.Aggro = navTargetEntity;
-    }
 
     private static Position GetStep(Position navTarget, Entity entity, double deltaTime)
     {
@@ -89,12 +74,8 @@ public static class NavigationService
         return navTarget;
     }
 
-    private static (Position, Entity?) GetNavigationTarget(Entity entity, Match match)
+    public static Entity? GetClosestEntity(Entity entity, Match match)
     {
-        bool logs = false;
-        double closestDistanceSquared = double.MaxValue;
-
-        // TODO: Other factors such as enemy presence or other constructions will come above
         Entity? closestEntity = null;
         double closestEntityDistance = Double.MaxValue;
 
@@ -116,6 +97,16 @@ public static class NavigationService
                 }
             }
         }
+
+        return closestEntity;
+    }
+
+    private static (Position, Entity?) GetNavigationTarget(Entity entity, Match match)
+    {
+        bool logs = false;
+        double closestDistanceSquared = double.MaxValue;
+
+        Entity? closestEntity = GetClosestEntity(entity, match);
 
         Position closestBridge = BridgePositions[0];
         foreach (Position bridgePosition in BridgePositions)

@@ -11,4 +11,14 @@ public record ActionResultValueDespawn(int Id)
     : ActionResultValue;
 
 public record ActionResultValueMove(Position Position) : ActionResultValue;
-public record ActionResultValueAttack(int AttackerId, int VictimId) : ActionResultValue;
+public record ActionResultValueAttackMelee(int AttackerId, int VictimId) : ActionResultValue;
+
+public record ActionResultValueAttackRanged(
+    int AttackerId,
+    ProjectileType ProjectileType,
+    int ProjectileId,
+    Position StartPosition,
+    Position EndPosition,
+    int Direction,
+    int Speed
+) : ActionResultValue;

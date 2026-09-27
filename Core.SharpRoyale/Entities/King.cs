@@ -15,7 +15,7 @@ public class King(int owner, Match match) : Entity(owner, match)
     public override bool IsConstruction { get; } = true;
     public override float HitboxRadius { get; } = 0f;
     public override float AttackDistance { get; } = 10f;
-    protected override IAttackBehavior AttackBehavior { get; init; } = new RangedAttack();
+    internal override IAttackBehavior AttackBehavior { get; init; } = new RangedAttack() {ProjectileType = ProjectileType.Arrow};
     protected override double AttackSpeed { get; } = 2;
     public override int Damage { get; } = 10;
     protected override int Health { get; set; } = 100;

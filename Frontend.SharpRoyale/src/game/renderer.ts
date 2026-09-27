@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { gameState } from "./gameState";
 import { ENTITY_DATA, ShapeType } from "./EntityData";
+import { getSprite, PROJECTILE_SPRITES } from "./Projectile";
 
 export const TILE_COLS = 18;
 export const TILE_ROWS = 32;
@@ -21,6 +22,7 @@ export function renderFrame(
   renderTiles(ctx, tileWidth, tileHeight, canvasWidth, canvasHeight);
   renderTickText(ctx, gameState.tickId);
   renderEntities(ctx, tileWidth, tileHeight);
+  renderProjectiles(ctx, tileWidth, tileHeight);
 
   // Prview Tile
   if (activeCard != null && previewTile != null) {
@@ -92,6 +94,49 @@ function renderEntities(
     } else {
       renderFriendlyEntity(ctx, entity, tileWidth, tileHeight);
     }
+  }
+}
+
+function renderProjectiles(
+  ctx: CanvasRenderingContext2D,
+  tileWidth: number,
+  tileHeight: number,
+) {
+  for (const projectile of gameState.projectiles.values()) {
+    const spritePath = PROJECTILE_SPRITES[projectile.projectileType];
+    if (!spritePath) {
+      console.error(
+        `No sprite found for projectile type ${projectile.projectileType}`,
+      );
+      continue;
+    }
+
+    const img = getSprite(spritePath);
+    if (!img) {
+      console.error(`Sprite not preloaded for path: ${spritePath}`);
+      continue;
+    }
+
+    let centerX = projectile.position.x * tileWidth;
+    let centerY = projectile.position.y * tileHeight;
+    let renderDirection = projectile.direction;
+
+    if (gameState.isMirrored) {
+      centerY = (TILE_ROWS - projectile.position.y) * tileHeight;
+      renderDirection = (180 - projectile.direction + 360) % 360;
+    }
+
+    const size = 1;
+    const drawWidth = size * tileWidth;
+    const drawHeight = size * tileHeight;
+
+    const radians = (renderDirection * Math.PI) / 180;
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(radians);
+    ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+    ctx.restore();
   }
 }
 

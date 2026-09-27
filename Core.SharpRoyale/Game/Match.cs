@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Core.SharpRoyale.GameServices.ActionListService;
 
 namespace Core.SharpRoyale;
 
@@ -8,8 +9,8 @@ public class Match
     public int MatchId { get; }
     public (Player p1, Player p2) Players { get; }
     public ArenaMap Map { get; }
-    public List<GameServices.ActionListService.ActionElement> ActionList { get; } = [];
-    public List<GameServices.ActionListService.ActionElementResult> ActionListResult { get; } = [];
+    public List<ActionElement> ActionList { get; } = [];
+    public List<ActionElementResult> ActionListResult { get; } = [];
 
     private int NextEntityId = 0;
 

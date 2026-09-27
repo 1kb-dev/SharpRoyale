@@ -10,10 +10,23 @@ interface EntityState {
   lastAction: MatchAction | null;
 }
 
+export interface ProjectileState {
+  id: number;
+  projectileType: number; // The projectile type, used to get the sprite
+  startPosition: { x: number; y: number };
+  endPosition: { x: number; y: number };
+  position: { x: number; y: number };
+  direction: number;
+  speed: number;
+  isEnemy: boolean;
+  spawnTime: number;
+}
+
 export const gameState = {
   matchId: null as number | null,
   tickId: 0,
   entities: new Map<number, EntityState>(),
+  projectiles: new Map<number, ProjectileState>(),
   playerId: null as number | null,
   isMirrored: null as boolean | null,
 };
