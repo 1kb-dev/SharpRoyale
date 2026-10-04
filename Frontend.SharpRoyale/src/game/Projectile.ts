@@ -20,7 +20,7 @@ function loadOneSprite(path: string): Promise<void> {
 }
 
 export async function preloadAllSprites(): Promise<void> {
-  const allPaths = Object.values(PROJECTILE_SPRITES); 
+  const allPaths = Object.values(PROJECTILE_SPRITES);
   await Promise.all(allPaths.map(loadOneSprite));
   console.log("All sprites loaded");
 }
@@ -32,7 +32,7 @@ export function getSprite(path: string): HTMLImageElement | undefined {
 export function updateProjectilePosition(
   projectile: ProjectileState,
   elapsedMs: number,
-): void {
+): boolean {
   const dx = projectile.endPosition.x - projectile.startPosition.x;
   const dy = projectile.endPosition.y - projectile.startPosition.y;
   const totalDistance = Math.sqrt(dx * dx + dy * dy);
@@ -45,6 +45,8 @@ export function updateProjectilePosition(
     x: projectile.startPosition.x + dx * t,
     y: projectile.startPosition.y + dy * t,
   };
+
+  return t >= 1;
 }
 
 export function updateAllProjectiles(
@@ -53,6 +55,12 @@ export function updateAllProjectiles(
   const now = performance.now();
   for (const p of projectiles.values()) {
     const elapsedMs = now - p.spawnTime;
-    updateProjectilePosition(p, elapsedMs);
+    const done = updateProjectilePosition(p, elapsedMs);
+    if (done) {
+      projectiles.delete(p.id);
+      console.log(
+        `Projectile ${p.id} reached its destination and was removed.`,
+      );
+    }
   }
 }

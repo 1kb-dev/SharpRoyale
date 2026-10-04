@@ -32,7 +32,7 @@ interface DespawnValues {
 }
 
 interface ProjectileSpawnValues {
-  id: number;
+  projectileId: number;
   attackerId: number;
   projectileType: number;
   startPosition: { x: number; y: number };
@@ -212,21 +212,22 @@ function applyDespawnAction(action: MatchAction) {
 }
 
 function applyProjectileSpawnAction(action: MatchAction) {
-  if (!isProjectileSpawnValues(action.values)) {
+  const values = action.values;
+  if (!isProjectileSpawnValues(values)) {
     console.error("Invalid projectile spawn values:", action.values);
     return;
   }
 
   const isEnemy = action.ownerId !== gameState.playerId;
 
-  gameState.projectiles.set(action.values.id, {
-    id: action.values.id,
-    projectileType: action.values.projectileType,
-    startPosition: action.values.startPosition,
-    endPosition: action.values.endPosition,
-    position: action.values.startPosition,
-    direction: action.values.direction,
-    speed: action.values.speed,
+  gameState.projectiles.set(values.projectileId, {
+    id: values.projectileId,
+    projectileType: values.projectileType,
+    startPosition: values.startPosition,
+    endPosition: values.endPosition,
+    position: values.startPosition,
+    direction: values.direction,
+    speed: values.speed,
     isEnemy: isEnemy,
     spawnTime: performance.now(),
   });

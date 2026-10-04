@@ -102,6 +102,7 @@ function renderProjectiles(
   tileWidth: number,
   tileHeight: number,
 ) {
+  console.log(`Rendering ${gameState.projectiles.size} projectiles`);
   for (const projectile of gameState.projectiles.values()) {
     const spritePath = PROJECTILE_SPRITES[projectile.projectileType];
     if (!spritePath) {
