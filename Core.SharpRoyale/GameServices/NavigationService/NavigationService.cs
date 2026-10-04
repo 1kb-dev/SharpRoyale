@@ -320,4 +320,19 @@ public static class NavigationService
     {
         return (GetDistanceToHitbox(entity, target) <= entity.AggroRange);
     }
+    
+    public static int GetDirection(Position pos1, Position pos2)
+    {
+        // Clockwise: 12 = 0, 6 = 180 etc (or so I believe, I didn't do the math cus I ain't no nerd)
+        double dx = pos2.X - pos1.X;
+        double dy = pos2.Y - pos1.Y;
+
+        double radians = Math.Atan2(dx, -dy);
+        double degrees = radians * (180.0 / Math.PI);
+
+        if (degrees < 0)
+            degrees += 360;
+
+        return (int)Math.Round(degrees);
+    }
 }

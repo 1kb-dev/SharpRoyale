@@ -1,7 +1,6 @@
-import { useRef } from "react";
 import { gameState } from "./gameState";
-import { ENTITY_DATA, ShapeType } from "./EntityData";
-import { getSprite, PROJECTILE_SPRITES } from "./Projectile";
+import { ENTITY_DATA } from "./EntityData";
+import { ENTITY_SPRITES, getSprite, PROJECTILE_SPRITES } from "./spriteHandler";
 
 export const TILE_COLS = 18;
 export const TILE_ROWS = 32;
@@ -89,11 +88,7 @@ function renderEntities(
   tileHeight: number,
 ) {
   for (const entity of gameState.entities.values()) {
-    if (entity.isEnemy) {
-      renderEnemyEntity(ctx, entity, tileWidth, tileHeight);
-    } else {
-      renderFriendlyEntity(ctx, entity, tileWidth, tileHeight);
-    }
+    renderEntity(ctx, entity, tileWidth, tileHeight);
   }
 }
 
@@ -141,14 +136,21 @@ function renderProjectiles(
   }
 }
 
-function renderEnemyEntity(
+function renderEntity(
   ctx: CanvasRenderingContext2D,
   entity: any,
   tileWidth: number,
   tileHeight: number,
 ) {
-  const size = ENTITY_DATA[entity.entityId].size;
-  const [sizeW, sizeH] = size;
+  const entityData = ENTITY_DATA[entity.entityId];
+  const spritePath = ENTITY_SPRITES[entity.entityId];
+  const sprite = spritePath ? getSprite(spritePath) : undefined;
+  if (!entityData || !sprite) {
+    console.error(`Sprite not preloaded for entity type: ${entity.entityId}`);
+    return;
+  }
+
+  const [sizeW, sizeH] = entityData.size;
 
   let centerX = entity.position.x * tileWidth;
   let centerY = entity.position.y * tileHeight;
@@ -157,190 +159,29 @@ function renderEnemyEntity(
     centerY = (TILE_ROWS - entity.position.y) * tileHeight;
   }
 
-  const x = centerX - (sizeW * tileWidth) / 2;
-  const y = centerY - (sizeH * tileHeight) / 2;
+  const hasDirection = entity.direction !== null;
+  let renderDirection = entity.direction ?? (entity.isEnemy ? 180 : 0);
+  if (hasDirection && gameState.isMirrored) {
+    renderDirection = (180 - renderDirection + 360) % 360;
+  }
 
-  const baseColor = darken(ENTITY_DATA[entity.entityId].color);
+  const drawWidth = sizeW * tileWidth;
+  const drawHeight = sizeH * tileHeight;
+  const radians = (renderDirection * Math.PI) / 180;
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate(radians);
   if (entity.gotHit > 0) {
-    ctx.fillStyle = pulseColor(baseColor, entity.gotHit);
+    ctx.filter = "brightness(1.8)";
     entity.gotHit = Math.max(0, entity.gotHit - 1);
-  } else {
-    ctx.fillStyle = baseColor;
+  } else if (entity.isEnemy) {
+    ctx.filter = "brightness(0.7)";
   }
-
-  renderObject(
-    ctx,
-    x,
-    y,
-    tileWidth * size[0],
-    tileHeight * size[1],
-    ENTITY_DATA[entity.entityId].shape,
-  );
+  ctx.drawImage(sprite, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+  ctx.restore();
 }
 
-function renderFriendlyEntity(
-  ctx: CanvasRenderingContext2D,
-  entity: any,
-  tileWidth: number,
-  tileHeight: number,
-) {
-  const size = ENTITY_DATA[entity.entityId].size;
-  const [sizeW, sizeH] = size;
-
-  let centerX = entity.position.x * tileWidth;
-  let centerY = entity.position.y * tileHeight;
-
-  if (gameState.isMirrored) {
-    centerY = (TILE_ROWS - entity.position.y) * tileHeight;
-  }
-
-  const x = centerX - (sizeW * tileWidth) / 2;
-  const y = centerY - (sizeH * tileHeight) / 2;
-
-  const baseColor = ENTITY_DATA[entity.entityId].color;
-
-  if (entity.gotHit > 0) {
-    ctx.fillStyle = pulseColor(baseColor, entity.gotHit);
-    entity.gotHit = Math.max(0, entity.gotHit - 1);
-  } else {
-    ctx.fillStyle = baseColor;
-  }
-
-  renderObject(
-    ctx,
-    x,
-    y,
-    tileWidth * size[0],
-    tileHeight * size[1],
-    ENTITY_DATA[entity.entityId].shape,
-  );
-}
-
-function renderObject(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  shape: ShapeType,
-) {
-  switch (shape) {
-    case ShapeType.Square:
-      ctx.fillRect(x, y, w, h);
-      break;
-    case ShapeType.Circle: {
-      const centerX = x + w / 2;
-      const centerY = y + h / 2;
-      const radius = Math.min(w, h) / 2;
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
-    default:
-      throw new Error(`Unknown shape type: ${shape}`);
-  }
-}
-
-function darken(hex: string, amount = 0.3): string {
-  const num = parseInt(hex.replace("#", ""), 16);
-  const r = Math.max(0, ((num >> 16) & 0xff) * (1 - amount));
-  const g = Math.max(0, ((num >> 8) & 0xff) * (1 - amount));
-  const b = Math.max(0, (num & 0xff) * (1 - amount));
-  return `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
-}
-
-const HIT_FLASH_DURATION = 30; // ticks
-
-function pulseColor(baseColor: string, gotHit: number): string {
-  const t = gotHit / HIT_FLASH_DURATION; // 1 -> just hit, 0 -> worn off
-  const easedT = 1 - Math.pow(1 - t, 3); // ease-out: fast rise, smooth long tail
-
-  const [h, s, l] = hexOrRgbToHsl(baseColor);
-
-  // push lightness toward ~90%, scaled by how "hit" we still are
-  const targetL = 0.9;
-  const newL = l + (targetL - l) * easedT;
-
-  return hslToRgbString(h, s, newL);
-}
-
-function hexOrRgbToHsl(color: string): [number, number, number] {
-  let r: number, g: number, b: number;
-
-  if (color.startsWith("rgb")) {
-    const match = color.match(/[\d.]+/g)!;
-    [r, g, b] = match.map(Number);
-  } else {
-    const clean = color.replace("#", "");
-    r = parseInt(clean.substring(0, 2), 16);
-    g = parseInt(clean.substring(2, 4), 16);
-    b = parseInt(clean.substring(4, 6), 16);
-  }
-
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-
-  return [h, s, l];
-}
-
-function hslToRgbString(h: number, s: number, l: number): string {
-  if (s === 0) {
-    const v = Math.round(l * 255);
-    return `rgb(${v}, ${v}, ${v})`;
-  }
-
-  const hue2rgb = (p: number, q: number, t: number) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-
-  const r = Math.round(hue2rgb(p, q, h + 1 / 3) * 255);
-  const g = Math.round(hue2rgb(p, q, h) * 255);
-  const b = Math.round(hue2rgb(p, q, h - 1 / 3) * 255);
-
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return [r, g, b];
-}
 function renderSeaAndBridge(
   ctx: CanvasRenderingContext2D,
   tileWidth: number,

@@ -10,7 +10,7 @@ public record ActionListValueSpawn(Position Position, int EntityId, Player playe
 public record ActionListValueDespawn(int Id)
     : ActionListValue;
 
-public record ActionListValueMove(Position Position, int EntityId) : ActionListValue;
+public record ActionListValueMove(Position Position, int EntityId, int Direction) : ActionListValue;
 public record ActionListValueAttackMelee(int AttackerId, int VictimId) : ActionListValue;
 public record ActionListValueAttackRanged(Entity Attacker, Entity Victim) : ActionListValue;
 

@@ -47,6 +47,16 @@ public class GameEngine(TickClientFeedback tickClientFeedback)
 
             UserInteractionList.Clear();
 
+            for (int i = m.Map.Projectiles.Count - 1; i >= 0; i--)
+            {
+                var proj = m.Map.Projectiles[i];
+                if (proj.CheckIsDone())
+                {
+                    proj.ApplyEffect();
+                    m.Map.Projectiles.RemoveAt(i);
+                }
+            }
+
             // Collect Action
             foreach (Entity entity in m.Map.Entities)
             {

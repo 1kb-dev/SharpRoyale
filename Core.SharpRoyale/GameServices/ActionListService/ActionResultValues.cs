@@ -10,7 +10,7 @@ public record ActionResultValueSpawn(Position Position, Player player)
 public record ActionResultValueDespawn(int Id)
     : ActionResultValue;
 
-public record ActionResultValueMove(Position Position) : ActionResultValue;
+public record ActionResultValueMove(Position Position, int Direction) : ActionResultValue;
 public record ActionResultValueAttackMelee(int AttackerId, int VictimId) : ActionResultValue;
 
 public record ActionResultValueAttackRanged(

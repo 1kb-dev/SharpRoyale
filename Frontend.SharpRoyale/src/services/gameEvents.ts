@@ -17,10 +17,12 @@ export interface MatchEvent {
 
 interface SpawnValues {
   position: { x: number; y: number };
+  direction?: number | null;
 }
 
 interface MoveValues {
   position: { x: number; y: number };
+  direction: number | null;
 }
 
 interface DamagedValues {
@@ -49,7 +51,13 @@ function isSpawnValues(val: unknown): val is SpawnValues {
   if (typeof pos !== "object" || pos === null) return false;
   const posObj = pos as Record<string, unknown>;
 
-  return typeof posObj.x === "number" && typeof posObj.y === "number";
+  return (
+    typeof posObj.x === "number" &&
+    typeof posObj.y === "number" &&
+    (obj.direction === undefined ||
+      obj.direction === null ||
+      typeof obj.direction === "number")
+  );
 }
 
 function isMoveValues(val: unknown): val is MoveValues {
@@ -60,7 +68,11 @@ function isMoveValues(val: unknown): val is MoveValues {
   if (typeof pos !== "object" || pos === null) return false;
   const posObj = pos as Record<string, unknown>;
 
-  return typeof posObj.x === "number" && typeof posObj.y === "number";
+  return (
+    typeof posObj.x === "number" &&
+    typeof posObj.y === "number" &&
+    (obj.direction === null || typeof obj.direction === "number")
+  );
 }
 
 function isDamagedValues(val: unknown): val is DamagedValues {
@@ -168,6 +180,7 @@ function applySpawnAction(action: MatchAction) {
     gotHit: 0,
     lastAction: action,
     position: action.values.position,
+    direction: action.values.direction ?? null,
   });
 }
 
@@ -182,6 +195,7 @@ function applyMoveAction(action: MatchAction) {
     return;
   }
   entity.position = action.values.position;
+  entity.direction = action.values.direction;
   entity.lastAction = action;
 }
 

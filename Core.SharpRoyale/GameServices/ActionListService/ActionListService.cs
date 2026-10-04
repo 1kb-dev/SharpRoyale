@@ -240,7 +240,7 @@ public static class ActionListService
             new ActionElementResult(
                 entity,
                 actionElement.Option,
-                new ActionResultValueMove(val.Position),
+                new ActionResultValueMove(val.Position, val.Direction),
                 actionElement.Time
             )
         );

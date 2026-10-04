@@ -79,7 +79,8 @@ public abstract class Entity(int Owner, Match match)
         {
             (Position nextPos, Entity? closestEntity) = NavigationService.GetNextNavigation(this, match, TickRate);
             if (closestEntity is not null) AttackService.AssignAggroIfInRange(this, closestEntity);
-            ActionListService.AppendActionListMove(new ActionListValueMove(nextPos, this.Id), match);
+            int direction = NavigationService.GetDirection(this.Pos, nextPos);
+            ActionListService.AppendActionListMove(new ActionListValueMove(nextPos, this.Id, direction), match);
         }
         else
         {

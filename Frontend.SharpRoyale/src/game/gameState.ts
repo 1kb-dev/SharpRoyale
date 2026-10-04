@@ -8,6 +8,7 @@ interface EntityState {
   gotHit: number; // Everytime they get hit this turns to "X", and each tick it goes down. This is for giving pulse feedback that entity got hit.
   position: { x: number; y: number };
   lastAction: MatchAction | null;
+  direction: number | null;
 }
 
 export interface ProjectileState {

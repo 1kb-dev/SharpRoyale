@@ -11,9 +11,8 @@ import { applyMatchEvent } from "../services/gameEvents";
 import DeckContainer from "./deckContainer";
 import { getCardEntityId } from "../services/deckService";
 import { gameState } from "../game/gameState";
-import { preload } from "react-dom";
-import { preloadAllSprites } from "../game/Projectile";
-import { updateAllProjectiles, updateProjectilePosition } from "../game/Projectile";
+import { preloadAllSprites } from "../game/spriteHandler";
+import { updateAllProjectiles } from "../game/Projectile";
 
 interface GameWindowProps {
   matchId: number | null;

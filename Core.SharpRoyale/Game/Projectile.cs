@@ -1,4 +1,5 @@
 using Core.SharpRoyale.GameServices.ActionListService;
+using Core.SharpRoyale.GameServices.NavigationService;
 
 namespace Core.SharpRoyale;
 
@@ -9,43 +10,32 @@ public class Projectile(ProjectileType projectileType ,int id, Entity attacker, 
     public Entity Attacker { get; } =  attacker;
     public Entity Victim { get; } =  victim;
     public Position Position { get; set; } = attacker.Pos;
-    public int Direction { get; } = GetDirection(attacker, victim);
+    public int Direction { get; } = NavigationService.GetDirection(attacker.Pos, victim.Pos);
     public int Speed { get; } = GetSpeed(projectileType);
+    public long LifeStamp { get; } = Environment.TickCount64;
 
-    public void MoveOneTick(double deltaTime, Match match)
+    // Total flight time in ms
+    public long LifeSpan { get; } = GetLifeSpan(attacker, victim, GetSpeed(projectileType));
+
+    public void ApplyEffect()
     {
-        double dx = Victim.Pos.X - Attacker.Pos.X;
-        double dy = Victim.Pos.Y - Attacker.Pos.Y;
-
-        double distance = Math.Sqrt(dx * dx + dy * dy);
-
-        double stepSize = Attacker.Speed * deltaTime;
-
-        if (distance <= stepSize || distance == 0)
-        {
-            Position = Victim.Pos;
-        }
-
-        double stepX = dx / distance;
-        double stepY = dy / distance;
-
-        Position = new Position(Attacker.Pos.X + stepX * stepSize, Attacker.Pos.Y + stepY * stepSize);
-        ActionListService.AppendActionListMove(new ActionListValueMove(Position, this.Id), match);
+        Victim.ProcessDamage(Attacker.Damage);
     }
 
-    private static int GetDirection(Entity attacker, Entity victim)
+    private static long GetLifeSpan(Entity attacker, Entity victim, int speed)
     {
-        // Clockwise: 12 = 0, 6 = 180 etc (or so I believe, I didn't do the math cus I ain't no nerd)
+        if (speed <= 0) return 0;
+
         double dx = victim.Pos.X - attacker.Pos.X;
         double dy = victim.Pos.Y - attacker.Pos.Y;
+        double distance = Math.Sqrt(dx * dx + dy * dy);
 
-        double radians = Math.Atan2(dx, -dy);
-        double degrees = radians * (180.0 / Math.PI);
+        return (long)(distance / speed * 1000);
+    }
 
-        if (degrees < 0)
-            degrees += 360;
-
-        return (int)Math.Round(degrees);
+    public bool CheckIsDone()
+    {
+        return Environment.TickCount64 - LifeStamp >= LifeSpan;
     }
 
     private static int GetSpeed(ProjectileType projectileType)
