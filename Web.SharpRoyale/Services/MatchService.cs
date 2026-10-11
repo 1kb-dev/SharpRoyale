@@ -62,4 +62,9 @@ public class MatchService(GameEngine engine)
         // TODO: Needs to be a Result instead
         return true;
     }
+    
+    public void DisconnectPlayerFromMatch(int matchId, int playerId)
+    {
+        GetMatchFromId(matchId).GetPlayerFromId(playerId).isConnected = false;
+    }
 }

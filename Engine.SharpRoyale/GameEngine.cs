@@ -74,6 +74,13 @@ public class GameEngine(TickClientFeedback tickClientFeedback)
             );
             await tickClientFeedback.PublishTickResultAsync(tickResult);
             tickId++;
+            
+            // Abort Match if ghost
+            if (!m.Players.p1.isConnected && !m.Players.p2.isConnected)
+            {
+                Console.WriteLine("Aborting Match");
+                break;
+            }
 
             // Sleep
             var elapsed = sw.ElapsedMilliseconds;

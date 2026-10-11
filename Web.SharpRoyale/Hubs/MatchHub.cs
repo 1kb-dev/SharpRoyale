@@ -21,6 +21,18 @@ public class MatchHub(MatchService matchService) : Hub
 
         await base.OnConnectedAsync();
     }
+    
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var matchId = GetMatchIdFromRoute(Context.GetHttpContext());
+        
+        matchService.DisconnectPlayerFromMatch(matchId, GetPlayerId(Context.User));
+
+        // exception is null on a clean disconnect, non-null if the connection dropped due to an error
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"match:{matchId}");
+
+        await base.OnDisconnectedAsync(exception);
+    }
 
     public Task JoinMatch(int matchId)
     {
