@@ -151,11 +151,7 @@ export async function applyMatchEvent(event: MatchEvent) {
         console.log("Applying projectile spawn action:", action);
         applyProjectileSpawnAction(action);
         break;
-      case 5: // Projectile Move
-        console.log("Applying projectile move action:", action);
-        //applyMoveAction(action);
-        break;
-      case 6: // Despawn
+      case 5: // Despawn
         console.log("Applying despawn action:", action);
         applyDespawnAction(action);
         break;
