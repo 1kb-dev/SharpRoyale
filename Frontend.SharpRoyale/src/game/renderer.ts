@@ -171,7 +171,7 @@ function renderEntity(
 
   ctx.save();
   ctx.translate(centerX, centerY);
-  ctx.rotate(radians);
+  if (!entityData.isConstruction) ctx.rotate(radians);
   if (entity.gotHit > 0) {
     ctx.filter = "brightness(1.8)";
     entity.gotHit = Math.max(0, entity.gotHit - 1);
