@@ -46,6 +46,31 @@ header {
   color: #f0e2c0;
 }
 
+.game-result {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.game-result h1 {
+  margin: 0;
+  font-size: 48px;
+  color: #f0e2c0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.game-result--win h1 {
+  color: #ffd54a;
+}
+
+.game-result--lose h1 {
+  color: #ff6b6b;
+}
+
 .join-match-button {
   position: absolute;
   top: 10%;

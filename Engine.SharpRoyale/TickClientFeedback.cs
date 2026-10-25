@@ -4,12 +4,12 @@ namespace Engine.SharpRoyale;
 
 public record TickActionDto(
     ActionListOption Option,
-    int EntityId,
-    int Id,
-    int OwnerId,
-    bool isMirrored,
-    object? Values,
-    DateTime Time
+    DateTime Time,
+    int? EntityId = null,
+    int? Id = null,
+    int? OwnerId = null,
+    bool? IsMirrored = null,
+    object? Values = null
 );
 
 public record TickResultDto(int MatchId, long TickId, IReadOnlyList<TickActionDto> Actions);
@@ -27,12 +27,12 @@ public class TickClientFeedback(ITickResultPublisher tickResultPublisher)
         var actions = resolvedActions
             .Select(actionElement => new TickActionDto(
                 actionElement.Option,
-                actionElement.Entity.EntityId,
-                actionElement.Entity.Id,
-                actionElement.Entity.Owner,
-                actionElement.Entity.IsMirrored,
-                actionElement.Values,
-                actionElement.Time
+                actionElement.Time,
+                EntityId: (int?)(actionElement.Entity?.EntityId),
+                Id: actionElement.Entity?.Id,
+                OwnerId: actionElement.Entity?.Owner,
+                IsMirrored: actionElement.Entity?.IsMirrored,
+                Values: actionElement.Values
             ))
             .ToList();
 

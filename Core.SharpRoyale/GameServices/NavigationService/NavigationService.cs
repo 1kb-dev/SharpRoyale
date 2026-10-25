@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core.SharpRoyale.Entities;
 using Core.SharpRoyale.GameServices.ActionListService;
 
 namespace Core.SharpRoyale.GameServices.NavigationService;
@@ -8,8 +7,8 @@ public static class NavigationService
 {
     private static readonly Position[] BridgePositions =
     {
-        new Position(3.5, 16),
-        new Position(14.5, 16),
+        new (3.5, 16),
+        new (14.5, 16),
     };
 
     // 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
@@ -25,7 +24,7 @@ public static class NavigationService
 
     private static Position GetStep(Position navTarget, Entity entity, double deltaTime)
     {
-        
+
         double dx = navTarget.X - entity.Pos.X;
         double dy = navTarget.Y - entity.Pos.Y;
 
@@ -44,19 +43,19 @@ public static class NavigationService
         return new Position(entity.Pos.X + stepX * stepSize, entity.Pos.Y + stepY * stepSize);
     }
 
-    private static Entity GetClosestEnemyTower(Entity entity, Match match)
+    private static Entity? GetClosestEnemyTower(Entity entity, Match match)
     {
         double closestDistanceSquared = double.MaxValue;
 
         Entity navTarget = entity;
         List<Entity> candidates = match
             .Map.Entities.Where(xEntity =>
-                xEntity.EntityId is 1 or 2 && xEntity.Owner != entity.Owner
+                xEntity.EntityId is EntityId.King or EntityId.Tower && xEntity.Owner != entity.Owner
             )
             .ToList();
 
         if (candidates.Count == 0)
-            throw new NotSupportedException();
+            return null;
 
         foreach (Entity tower in candidates)
         {
@@ -178,7 +177,8 @@ public static class NavigationService
             }
             if (logs)
                 Console.WriteLine("Is past exit bridge, going towards enemy tower");
-            Entity closestEnemyTower = GetClosestEnemyTower(entity, match);
+            Entity? closestEnemyTower = GetClosestEnemyTower(entity, match);
+            if (closestEnemyTower == null) return (entity.Pos, null);
             return (GetCollisionPoint(entity, closestEnemyTower), closestEnemyTower) ;
         }
 
@@ -320,7 +320,7 @@ public static class NavigationService
     {
         return (GetDistanceToHitbox(entity, target) <= entity.AggroRange);
     }
-    
+
     public static int GetDirection(Position pos1, Position pos2)
     {
         // Clockwise: 12 = 0, 6 = 180 etc (or so I believe, I didn't do the math cus I ain't no nerd)

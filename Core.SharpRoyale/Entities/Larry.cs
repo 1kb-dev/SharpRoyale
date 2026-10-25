@@ -1,12 +1,10 @@
-using System;
 using Core.SharpRoyale.GameServices.ActionListService;
-using Core.SharpRoyale.GameServices.NavigationService;
 
 namespace Core.SharpRoyale.Entities;
 
 public class Larry(int owner, Match match) : Entity(owner, match)
 {
-    public override int EntityId { get; } = 3;
+    public override EntityId EntityId { get; } = EntityId.Larry;
     public override int Width { get; } = 1;
     public override int Height { get; } = 1;
     public override int ElixirCost { get; } = 1;
@@ -17,7 +15,7 @@ public class Larry(int owner, Match match) : Entity(owner, match)
     public override float AttackDistance { get; } = 0.1f;
     internal override IAttackBehavior AttackBehavior { get; init; } = new MeleeAttack();
     protected override double AttackSpeed { get; } = 2;
-    public override int Damage { get; } = 1;
+    public override int Damage { get; } = 9999; // Dev purposes.
     protected override int Health { get; set; } = 10;
 
 

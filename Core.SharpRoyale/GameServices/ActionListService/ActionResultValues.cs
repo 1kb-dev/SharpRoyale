@@ -1,10 +1,10 @@
 namespace Core.SharpRoyale.GameServices.ActionListService;
 
-public abstract record ActionResultValue();
+public abstract record ActionResultValue;
 
 // Note that values like EntityId(type) and id(for entity) are always send to client so you don't need it explicitly here
 // For more info look at TickClientFeedback.cs
-public record ActionResultValueSpawn(Position Position, Player player)
+public record ActionResultValueSpawn(Position Position, Player Player)
     : ActionResultValue;
 
 public record ActionResultValueDespawn(int Id)
@@ -12,7 +12,6 @@ public record ActionResultValueDespawn(int Id)
 
 public record ActionResultValueMove(Position Position, int Direction) : ActionResultValue;
 public record ActionResultValueAttackMelee(int AttackerId, int VictimId) : ActionResultValue;
-
 public record ActionResultValueAttackRanged(
     int AttackerId,
     ProjectileType ProjectileType,
@@ -22,3 +21,4 @@ public record ActionResultValueAttackRanged(
     int Direction,
     int Speed
 ) : ActionResultValue;
+public record ActionResultValueVictory(int WinnerId) : ActionResultValue;

@@ -1,12 +1,10 @@
-using System;
 using Core.SharpRoyale.GameServices.ActionListService;
-using Core.SharpRoyale.GameServices.NavigationService;
 
 namespace Core.SharpRoyale.Entities;
 
 public class King(int owner, Match match) : Entity(owner, match)
 {
-    public override int EntityId { get; } = 2;
+    public override EntityId EntityId { get; } = EntityId.King;
     public override int Width { get; } = 4;
     public override int Height { get; } = 4;
     public override int ElixirCost { get; } = 0;

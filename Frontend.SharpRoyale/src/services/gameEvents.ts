@@ -5,7 +5,13 @@ export interface MatchAction {
   id: number;
   entityId: number;
   ownerId: number;
-  values: SpawnValues | MoveValues | DamagedValues | DespawnValues;
+  values:
+    | SpawnValues
+    | MoveValues
+    | DamagedValues
+    | DespawnValues
+    | ProjectileSpawnValues
+    | VictoryValues;
   time: string;
 }
 
@@ -31,6 +37,10 @@ interface DamagedValues {
 
 interface DespawnValues {
   id: number;
+}
+
+interface VictoryValues {
+  winnerId: number;
 }
 
 interface ProjectileSpawnValues {
@@ -89,6 +99,12 @@ function isDespawnValues(val: unknown): val is DespawnValues {
   return typeof obj.id === "number";
 }
 
+function isVictoryValues(val: unknown): val is VictoryValues {
+  if (typeof val !== "object" || val === null) return false;
+
+  return typeof (val as Record<string, unknown>).winnerId === "number";
+}
+
 function isProjectileSpawnValues(val: unknown): val is ProjectileSpawnValues {
   if (typeof val !== "object" || val === null) return false;
   const obj = val as Record<string, unknown>;
@@ -114,7 +130,10 @@ function isProjectileSpawnValues(val: unknown): val is ProjectileSpawnValues {
   );
 }
 
-export async function applyMatchEvent(event: MatchEvent) {
+export async function applyMatchEvent(
+  event: MatchEvent,
+  onVictory?: (winnerId: number) => void,
+) {
   if (gameState.playerId === null) {
     const playerInfo = await getPlayerInfo();
     if (playerInfo) {
@@ -154,6 +173,17 @@ export async function applyMatchEvent(event: MatchEvent) {
       case 5: // Despawn
         console.log("Applying despawn action:", action);
         applyDespawnAction(action);
+        break;
+      case 7: // Victory
+        if (!isVictoryValues(action.values)) {
+          console.error("Invalid victory values:", action.values);
+          break;
+        }
+        gameState.winnerId = action.values.winnerId;
+        onVictory?.(action.values.winnerId);
+        break;
+      default:
+        console.error("Unknown action option:", action.option);
         break;
     }
   }

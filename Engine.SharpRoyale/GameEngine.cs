@@ -1,9 +1,7 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Core.SharpRoyale;
 using Core.SharpRoyale.GameServices.ActionListService;
 using Core.SharpRoyale.GameServices.DeckService;
-using Core.SharpRoyale.GameServices.SpawnService;
 using Core.SharpRoyale.GameServices.UserInteractionService;
 
 namespace Engine.SharpRoyale;
@@ -74,11 +72,17 @@ public class GameEngine(TickClientFeedback tickClientFeedback)
             );
             await tickClientFeedback.PublishTickResultAsync(tickResult);
             tickId++;
-            
+
             // Abort Match if ghost
             if (!m.Players.p1.isConnected && !m.Players.p2.isConnected)
             {
                 Console.WriteLine("Aborting Match");
+                break;
+            }
+
+            if (m.WinnerPlayerId is not null)
+            {
+                Console.WriteLine($"Match Winner: {m.WinnerPlayerId}");
                 break;
             }
 

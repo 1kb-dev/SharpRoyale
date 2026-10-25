@@ -4,12 +4,12 @@ using Core.SharpRoyale.GameServices.NavigationService;
 
 namespace Core.SharpRoyale;
 
-public abstract class Entity(int Owner, Match match)
+public abstract class Entity(int owner, Match match)
 {
     // Identity & ownership
     public int Id { get; } = match.GetNextEntityId();
-    public abstract int EntityId { get; }
-    public int Owner { get; } = Owner;
+    public abstract EntityId EntityId { get; }
+    public int Owner { get; } = owner;
     public bool IsMirrored { get; set; }
 
     // Physical/stat properties (abstract, set by derived types)
@@ -33,9 +33,9 @@ public abstract class Entity(int Owner, Match match)
     protected abstract double AttackSpeed { get; } // seconds between attacks
     public abstract int Damage { get; }
     protected double AttackAccumulator { get; set; }
-    public Entity? Aggro { get; set; } = null; // When entity starts attacking and fully lcoked
+    public Entity? Aggro { get; set; } // When entity starts attacking and fully lcoked
     public virtual int AggroRange { get; } = 6; // the area where the entity will start following an entity, not locked.
-    public bool isDead { get; set; } = false;
+    public bool IsDead { get; set; }
 
     public abstract Entity ProcessDeployment(ushort x, ushort y);
 
@@ -44,7 +44,7 @@ public abstract class Entity(int Owner, Match match)
         this.Health =  Math.Max(0, this.Health - damage);
         if (this.Health == 0)
         {
-            isDead = true;
+            IsDead = true;
         }
         Console.WriteLine($"Got hit. Current HP: {this.Health}");
     }
@@ -53,9 +53,15 @@ public abstract class Entity(int Owner, Match match)
 
     public void Tick()
     {
-        if (isDead)
+        if (IsDead)
         {
             ActionListService.AppendActionListDespawn(new ActionListValueDespawn(Id), match);
+            if (EntityId == EntityId.King)
+            {
+                int winnerId = match.Players.p1.Id == this.Owner? match.Players.p2.Id : match.Players.p1.Id;
+                ActionListService.AppendActionListVictory(new ActionListValueVictory(winnerId),  match);
+                match.WinnerPlayerId = winnerId;
+            }
             return;
         }
         if (CheckIfAggroWithinRange(Aggro))
@@ -64,8 +70,8 @@ public abstract class Entity(int Owner, Match match)
 
             if (AttackAccumulator >= AttackSpeed)
             {
-                AttackAccumulator -= AttackSpeed; // keep the overflow instead of zeroing it
-                AttackBehavior.Attack(match, this, Aggro);
+                AttackAccumulator -= AttackSpeed;
+                AttackBehavior.Attack(match, this, Aggro!);
                 Console.WriteLine("Attacked");
             }
 
@@ -91,9 +97,9 @@ public abstract class Entity(int Owner, Match match)
     private bool CheckIfAggroWithinRange(Entity? aggro)
     {
         if (aggro is null) return false;
-        if (aggro.isDead) return false;
+        if (aggro.IsDead) return false;
 
-        double distance = 0;
+        double distance;
         if (aggro.IsConstruction)
         {
             distance = NavigationService.GetDistanceToConstruction(this, aggro);

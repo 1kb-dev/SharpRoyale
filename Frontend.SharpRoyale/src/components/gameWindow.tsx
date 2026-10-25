@@ -25,6 +25,7 @@ let autoJoin: Boolean = true;
 const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
   const [matchStatus, setMatchStatus] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [winnerId, setWinnerId] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const activeCard = useRef<number | null>(null);
   const previewTile = useRef<{ x: number; y: number; valid: boolean } | null>(
@@ -74,7 +75,9 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
 
   useEffect(() => {
     if (matchId == null) return;
-    const cleanup = connectToMatch(matchId, applyMatchEvent);
+    const cleanup = connectToMatch(matchId, (event) => {
+      void applyMatchEvent(event, setWinnerId);
+    });
     return cleanup;
   }, [matchId]);
 
@@ -98,6 +101,8 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
 
   const onPointerUp = () => {
     window.removeEventListener("pointermove", onPointerMove);
+
+    if (gameState.winnerId !== null) return;
 
     if (previewTile.current?.valid && activeCard.current != null) {
       let entityId = getCardEntityId(activeCard.current);
@@ -128,6 +133,8 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
   };
 
   const handleCardPointerDown = (cardId: number, e: React.PointerEvent) => {
+    if (gameState.winnerId !== null) return;
+
     console.log("pointer down", cardId);
     e.currentTarget.setPointerCapture(e.pointerId);
     activeCard.current = cardId;
@@ -151,6 +158,17 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
         </button>
       )}
       <DeckContainer onCardPointerDown={handleCardPointerDown} />
+      {winnerId !== null && (
+        <div
+          className={`game-result ${
+            winnerId === gameState.playerId
+              ? "game-result--win"
+              : "game-result--lose"
+          }`}
+        >
+          <h1>{winnerId === gameState.playerId ? "Victory!" : "Defeat"}</h1>
+        </div>
+      )}
     </div>
   );
 };

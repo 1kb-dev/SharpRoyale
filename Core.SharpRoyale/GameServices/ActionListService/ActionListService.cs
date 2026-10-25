@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Core.SharpRoyale;
-
-namespace Core.SharpRoyale.GameServices.ActionListService;
+﻿namespace Core.SharpRoyale.GameServices.ActionListService;
 
 public record ActionElement(ActionListOption Option, ActionListValue Values, DateTime Time);
 
@@ -44,7 +39,7 @@ public static class ActionListService
         );
         SortActionList(match);
     }
-    
+
     public static void AppendActionListDespawn(ActionListValueDespawn values, Match match)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -55,7 +50,7 @@ public static class ActionListService
         );
         SortActionList(match);
     }
-    
+
 
     public static void AppendActionListMove(ActionListValueMove values, Match match)
     {
@@ -65,7 +60,7 @@ public static class ActionListService
         match.ActionList.Add(new ActionElement(ActionListOption.Move, values, DateTime.UtcNow));
         SortActionList(match);
     }
-    
+
     public static void AppendActionListAttackMelee(ActionListValueAttackMelee values, Match match)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -74,8 +69,17 @@ public static class ActionListService
         match.ActionList.Add(new ActionElement(ActionListOption.AttackMelee, values, DateTime.UtcNow));
         SortActionList(match);
     }
-    
-    
+
+    public static void AppendActionListVictory(ActionListValueVictory values, Match match)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(match);
+
+        match.ActionList.Add(new ActionElement(ActionListOption.Victory, values, DateTime.UtcNow));
+        SortActionList(match);
+    }
+
+
     public static void AppendActionListAttackRanged(ActionListValueAttackRanged values, Match match)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -132,6 +136,9 @@ public static class ActionListService
                 case ActionListOption.Exit:
                     ApplyExitAction(actionElement);
                     break;
+                case ActionListOption.Victory:
+                    ApplyVictoryAction(actionElement, match);
+                    break;
             }
         }
 
@@ -176,7 +183,7 @@ public static class ActionListService
         }
         Entity? success = SpawnService.SpawnService.SpawnSingularEntity(
             val.EntityId,
-            val.player,
+            val.Player,
             match,
             val.Position
         );
@@ -187,7 +194,7 @@ public static class ActionListService
                 new ActionElementResult(
                     success,
                     actionElement.Option,
-                    new ActionResultValueSpawn(val.Position, val.player),
+                    new ActionResultValueSpawn(val.Position, val.Player),
                     actionElement.Time
                 )
             );
@@ -203,7 +210,7 @@ public static class ActionListService
 
         Entity? success = SpawnService.SpawnService.SpawnSingularEntitySpecial(
             val.EntityId,
-            val.player,
+            val.Player,
             match,
             val.Position
         );
@@ -214,7 +221,7 @@ public static class ActionListService
                 new ActionElementResult(
                     success,
                     actionElement.Option,
-                    new ActionResultValueSpawn(val.Position, val.player),
+                    new ActionResultValueSpawn(val.Position, val.Player),
                     actionElement.Time
                 )
             );
@@ -261,10 +268,10 @@ public static class ActionListService
         {
             return;
         }
-        
-        
+
+
         AttackService.AttackService.ApplyMeleeDamage(attacker, victim);
-        
+
         match.ActionListResult.Add(
             new ActionElementResult(
                 victim,
@@ -274,7 +281,7 @@ public static class ActionListService
             )
         );
     }
-    
+
     private static void ApplyAttackRangedAction(ActionElement actionElement, Match match)
     {
         if (actionElement.Values is not ActionListValueAttackRanged val)
@@ -288,7 +295,7 @@ public static class ActionListService
         }
 
         Projectile projectile = AttackService.AttackService.CreateProjectile(rangedAttack.ProjectileType,val.Attacker, val.Victim, match);
-        
+
         match.ActionListResult.Add(
             new ActionElementResult(
                 val.Attacker,
@@ -305,13 +312,13 @@ public static class ActionListService
         {
             return;
         }
-        
+
         Entity? entity = match.Map.Entities.FirstOrDefault(e => e.Id == val.Id);
 
         if (entity != null)
         {
             SpawnService.SpawnService.DespawnSingularEntity(val.Id, match);
-            
+
             match.ActionListResult.Add(
                 new ActionElementResult(
                     entity,
@@ -326,5 +333,22 @@ public static class ActionListService
     private static void ApplyExitAction(ActionElement actionElement)
     {
         // TODO: apply exit logic.
+    }
+
+    private static void ApplyVictoryAction(ActionElement actionElement, Match match)
+    {
+        if (actionElement.Values is not ActionListValueVictory val)
+        {
+            return;
+        }
+
+        match.ActionListResult.Add(
+            new ActionElementResult(
+                null,
+                actionElement.Option,
+                new ActionResultValueVictory(val.PlayerId),
+                actionElement.Time
+            )
+        );
     }
 }

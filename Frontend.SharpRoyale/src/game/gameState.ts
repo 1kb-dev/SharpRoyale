@@ -30,4 +30,5 @@ export const gameState = {
   projectiles: new Map<number, ProjectileState>(),
   playerId: null as number | null,
   isMirrored: null as boolean | null,
+  winnerId: null as number | null,
 };
