@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -12,6 +12,7 @@ public class LobbyController(LobbyService lobbyService, MatchNotifier matchNotif
     public async Task JoinQue()
     {
         Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
 
         var idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(idValue) || !int.TryParse(idValue, out var playerId))
@@ -25,7 +26,24 @@ public class LobbyController(LobbyService lobbyService, MatchNotifier matchNotif
 
         try
         {
-            await matchNotifier.WaitForMatchAsync(playerId, HttpContext.RequestAborted);
+            var ct = HttpContext.RequestAborted;
+
+            var matchTask = matchNotifier.WaitForMatchAsync(playerId, ct);
+
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    await matchTask.WaitAsync(TimeSpan.FromSeconds(15), ct);
+                    break; // match found
+                }
+                catch (TimeoutException)
+                {
+                    // Keep the SSE connection alive through proxies/idle timeouts.
+                    await Response.WriteAsync(": heartbeat\n\n", ct);
+                    await Response.Body.FlushAsync(ct);
+                }
+            }
         }
         catch (OperationCanceledException)
         {

@@ -38,17 +38,30 @@ public class MatchNotifier
         await res.Body.FlushAsync();
     }
 
-    public Task WaitForMatchAsync(int playerId, CancellationToken ct)
+    public async Task WaitForMatchAsync(int playerId, CancellationToken ct)
     {
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         _waiters[playerId] = tcs;
 
-        if (ct.CanBeCanceled)
+        try
         {
-            ct.Register(() => tcs.TrySetCanceled(ct));
-        }
+            // Kept alive for the whole wait and disposed on completion/cancellation
+            // instead of leaking one registration per heartbeat.
+            using var registration = ct.Register(
+                static state => ((TaskCompletionSource<bool>)state!).TrySetCanceled(),
+                tcs
+            );
 
-        return tcs.Task;
+            await tcs.Task;
+        }
+        finally
+        {
+            // Only remove our own waiter, so a late cleanup cannot drop a newer one.
+            if (_waiters.TryGetValue(playerId, out var waiter) && ReferenceEquals(waiter, tcs))
+            {
+                _waiters.TryRemove(playerId, out _);
+            }
+        }
     }
 
     public void SignalMatchFound(Player p1, Player p2)
@@ -62,10 +75,5 @@ public class MatchNotifier
         {
             tcs2.TrySetResult(true);
         }
-    }
-
-    public void RemoveWaiter(int playerId)
-    {
-        _waiters.TryRemove(playerId, out _);
     }
 }
