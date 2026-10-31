@@ -2,7 +2,7 @@ using Core.SharpRoyale.GameServices.ActionListService;
 
 namespace Core.SharpRoyale.Entities;
 
-public class Larry(int owner, Match match) : Entity(owner, match)
+public class Larry(int? owner, Match? match) : Entity(owner, match)
 {
     public override EntityId EntityId { get; } = EntityId.Larry;
     public override int Width { get; } = 1;

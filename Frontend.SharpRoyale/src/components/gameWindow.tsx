@@ -54,6 +54,7 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
 
     const start = async () => {
       await preloadAllSprites(); // ← once, before rendering begins
+      if (cancelled) return;
 
       const loop = () => {
         if (cancelled) return;

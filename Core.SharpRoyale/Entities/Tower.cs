@@ -1,10 +1,8 @@
-﻿using System;
-using Core.SharpRoyale.GameServices.ActionListService;
-using Core.SharpRoyale.GameServices.NavigationService;
+﻿using Core.SharpRoyale.GameServices.ActionListService;
 
 namespace Core.SharpRoyale.Entities;
 
-public class Tower(int owner, Match match) : Entity(owner, match)
+public class Tower(int? owner, Match? match) : Entity(owner, match)
 {
     public override EntityId EntityId { get; } = EntityId.Tower;
     public override int Width { get; } = 3;

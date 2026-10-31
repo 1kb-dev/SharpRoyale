@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import GameWindow from "./gameWindow";
+import { assignEntityData } from "../game/EntityData";
 
 function Page() {
   const [registerResult, setRegisterResult] = useState<string>("");
@@ -11,7 +12,8 @@ function Page() {
     if (didRegister) return;
     didRegister = true;
     (async () => {
-      await RegisterUser(setRegisterResult);
+      // Entity metadata must be available before any card or frame renders.
+      await Promise.all([RegisterUser(setRegisterResult), assignEntityData()]);
       setReady(true);
     })();
   }, []);

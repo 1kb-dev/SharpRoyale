@@ -1,4 +1,6 @@
-interface Entity {
+import { getEntities } from "../hooks/getEntities";
+export interface Entity {
+  entityId: number;
   name: string;
   size: [number, number];
   radius: number;
@@ -6,26 +8,18 @@ interface Entity {
   color: string;
 }
 
-export const ENTITY_DATA: Record<string, Entity> = {
-  1: {
-    name: "Tower",
-    size: [3, 3],
-    radius: 0,
-    isConstruction: true,
-    color: "#8B4513",
-  },
-  2: {
-    name: "King",
-    size: [4, 4],
-    radius: 0,
-    isConstruction: true,
-    color: "#FFD700",
-  },
-  3: {
-    name: "Larry",
-    size: [1, 1],
-    radius: 0.5,
-    isConstruction: false,
-    color: "#808080",
-  },
-};
+export const ENTITY_DATA: Record<number, Entity> = {};
+
+export async function assignEntityData(): Promise<void> {
+  try {
+    const entities = await getEntities();
+    entities.forEach((entity) => {
+      ENTITY_DATA[entity.entityId] = {
+        ...entity,
+        color: ENTITY_DATA[entity.entityId]?.color ?? "",
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching entity data:", error);
+  }
+}

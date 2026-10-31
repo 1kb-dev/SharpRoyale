@@ -115,6 +115,7 @@ header {
 
 .entity-shape {
   flex-shrink: 0;
+  user-select: none;
 }
 
 .entity-shape--rect {

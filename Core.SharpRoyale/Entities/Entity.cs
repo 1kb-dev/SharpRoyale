@@ -4,12 +4,12 @@ using Core.SharpRoyale.GameServices.NavigationService;
 
 namespace Core.SharpRoyale;
 
-public abstract class Entity(int owner, Match match)
+public abstract class Entity(int? owner, Match? match)
 {
     // Identity & ownership
-    public int Id { get; } = match.GetNextEntityId();
+    public int Id { get; } = match?.GetNextEntityId() ?? 0;
     public abstract EntityId EntityId { get; }
-    public int Owner { get; } = owner;
+    public int? Owner { get; } = owner;
     public bool IsMirrored { get; set; }
 
     // Physical/stat properties (abstract, set by derived types)
@@ -53,14 +53,23 @@ public abstract class Entity(int owner, Match match)
 
     public void Tick()
     {
+        var activeMatch = match ?? throw new InvalidOperationException(
+            "An entity without a match cannot be ticked.");
+
         if (IsDead)
         {
-            ActionListService.AppendActionListDespawn(new ActionListValueDespawn(Id), match);
+            ActionListService.AppendActionListDespawn(new ActionListValueDespawn(Id), activeMatch);
             if (EntityId == EntityId.King)
             {
-                int winnerId = match.Players.p1.Id == this.Owner? match.Players.p2.Id : match.Players.p1.Id;
-                ActionListService.AppendActionListVictory(new ActionListValueVictory(winnerId),  match);
-                match.WinnerPlayerId = winnerId;
+                int ownerId = Owner ?? throw new InvalidOperationException(
+                    "A runtime entity must have an owner.");
+                int winnerId = activeMatch.Players.p1.Id == ownerId
+                    ? activeMatch.Players.p2.Id
+                    : activeMatch.Players.p1.Id;
+                ActionListService.AppendActionListVictory(
+                    new ActionListValueVictory(winnerId),
+                    activeMatch);
+                activeMatch.WinnerPlayerId = winnerId;
             }
             return;
         }
@@ -71,7 +80,7 @@ public abstract class Entity(int owner, Match match)
             if (AttackAccumulator >= AttackSpeed)
             {
                 AttackAccumulator -= AttackSpeed;
-                AttackBehavior.Attack(match, this, Aggro!);
+                AttackBehavior.Attack(activeMatch, this, Aggro!);
                 Console.WriteLine("Attacked");
             }
 
@@ -83,14 +92,17 @@ public abstract class Entity(int owner, Match match)
 
         if (!IsConstruction)
         {
-            (Position nextPos, Entity? closestEntity) = NavigationService.GetNextNavigation(this, match, TickRate);
+            (Position nextPos, Entity? closestEntity) =
+                NavigationService.GetNextNavigation(this, activeMatch, TickRate);
             if (closestEntity is not null) AttackService.AssignAggroIfInRange(this, closestEntity);
             int direction = NavigationService.GetDirection(this.Pos, nextPos);
-            ActionListService.AppendActionListMove(new ActionListValueMove(nextPos, this.Id, direction), match);
+            ActionListService.AppendActionListMove(
+                new ActionListValueMove(nextPos, this.Id, direction),
+                activeMatch);
         }
         else
         {
-            AttackService.TryAssignAggro(this, match);
+            AttackService.TryAssignAggro(this, activeMatch);
         }
     }
 

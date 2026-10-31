@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { ENTITY_DATA } from "../game/EntityData";
+import { ENTITY_SPRITES } from "../game/spriteHandler";
 
 interface CardProps {
   entityId: number;
@@ -9,34 +10,24 @@ interface CardProps {
 const PX_PER_UNIT = 52;
 
 const Card = ({ entityId, onPointerDown }: CardProps) => {
-  console.log("Rendering card for entityId:", entityId); // Debugging line
   const entity = ENTITY_DATA[entityId];
+  const spritePath = ENTITY_SPRITES[entityId];
 
-  if (entity.isConstruction) {
-    const [w, h] = entity.size;
-    return (
-      <div className="card" onPointerDown={onPointerDown}>
-        <div
-          className="entity-shape entity-shape--rect"
-          style={{
-            width: `${w * PX_PER_UNIT}px`,
-            height: `${h * PX_PER_UNIT}px`,
-            backgroundColor: entity.color,
-          }}
-        />
-      </div>
-    );
-  }
+  // Entity metadata is fetched at startup; skip until it has arrived.
+  if (!entity || !spritePath) return null;
 
-  const diameter = entity.radius * 2 * PX_PER_UNIT;
+  const [width, height] = entity.size;
+
   return (
     <div className="card" onPointerDown={onPointerDown}>
-      <div
-        className="entity-shape entity-shape--circle"
+      <img
+        className="entity-shape"
+        src={spritePath}
+        alt={entity.name}
+        draggable={false}
         style={{
-          width: `${diameter}px`,
-          height: `${diameter}px`,
-          backgroundColor: entity.color,
+          width: `${width * PX_PER_UNIT}px`,
+          height: `${height * PX_PER_UNIT}px`,
         }}
       />
     </div>
