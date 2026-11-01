@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { connectToMatch } from "../services/WSconnection";
 import { sendSpawnAction } from "../services/gameRequests";
 import {
@@ -9,7 +9,7 @@ import {
 } from "../game/renderer";
 import { applyMatchEvent } from "../services/gameEvents";
 import DeckContainer from "./deckContainer";
-import { getCardEntityId } from "../services/deckService";
+import { getCardEntityId, getDeck, useEntity } from "../services/deckService";
 import { gameState } from "../game/gameState";
 import { preloadAllSprites } from "../game/spriteHandler";
 import { updateAllProjectiles } from "../game/Projectile";
@@ -31,6 +31,7 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
   const previewTile = useRef<{ x: number; y: number; valid: boolean } | null>(
     null,
   );
+  const [deck, setDeck] = useState<number[]>(getDeck());
 
   useEffect(() => {
     if (autoJoin) {
@@ -117,10 +118,12 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
         spawnY = TILE_ROWS - spawnY;
       }
 
+      useEntity(activeCard.current);
       sendSpawnAction("Spawn", {
         entityId: entityId,
         Position: { x: previewTile.current.x, y: spawnY },
       });
+      setDeck([...getDeck()]);
       console.info(
         "Spawn action sent for entityId:",
         entityId,
@@ -144,8 +147,11 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
   };
 
   return (
-    <div className="game-window">
-      <canvas ref={canvasRef} />
+    <div
+      className="game-window"
+      onDragStart={(e) => e.preventDefault()}
+    >
+      <canvas ref={canvasRef} draggable={false} />
       {matchId === null && <p>{matchStatus}</p>}
       {matchId === null && (
         <button
@@ -158,7 +164,7 @@ const GameWindow = ({ matchId, setMatchId }: GameWindowProps) => {
           Join Before Its Too Late!!!
         </button>
       )}
-      <DeckContainer onCardPointerDown={handleCardPointerDown} />
+      <DeckContainer deck={deck} onCardPointerDown={handleCardPointerDown} />
       {winnerId !== null && (
         <div
           className={`game-result ${

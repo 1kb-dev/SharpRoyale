@@ -1,15 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import Card from "./card";
 import { getDeck } from "../services/deckService";
 
 interface DeckContainerProps {
+  deck: number[];
   onCardPointerDown: (cardId: number, e: React.PointerEvent) => void;
 }
 
-const DeckContainer = ({ onCardPointerDown }: DeckContainerProps) => {
+const DeckContainer = ({ deck, onCardPointerDown }: DeckContainerProps) => {
   return (
     <div className="deck-container">
-      {Object.entries(getDeck()).map(([slotId, entityId]) => (
+      {Object.entries(deck).map(([slotId, entityId]) => (
         <Card
           entityId={entityId}
           key={slotId}

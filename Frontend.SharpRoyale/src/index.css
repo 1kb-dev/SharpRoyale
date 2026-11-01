@@ -16,7 +16,6 @@ header {
   background-color: #3e2a17;
   color: #f0e2c0;
   display: flex;
-  align-items: center;
   justify-content: center;
 }
 .game-window {
@@ -34,6 +33,12 @@ header {
   box-shadow:
     0 0 0 4px #6b4423,
     0 8px 20px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.game-window canvas,
+.game-window img {
+  -webkit-user-drag: none;
 }
 .game-window canvas {
   width: 100%;
@@ -94,6 +99,8 @@ header {
 .deck-container {
   width: 100%;
   height: 10%;
+  flex-shrink: 0;
+  min-height: 0;
   z-index: 1;
   display: flex;
   align-items: flex-end;
@@ -103,19 +110,24 @@ header {
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   margin-right: 10px;
   width: 17%;
   height: 120%;
   background-color: #4a4a4a;
   margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .entity-shape {
-  flex-shrink: 0;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
   user-select: none;
+  pointer-events: none;
 }
 
 .entity-shape--rect {
